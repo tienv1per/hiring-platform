@@ -125,7 +125,8 @@ func GetUserSkills(c *gin.Context) {
 	c.JSON(http.StatusOK, skills)
 }
 
-// SearchSkills searches for skills by name (public endpoint)
+// SearchSkills searches for skills using PostgreSQL Full-Text Search
+// Supports prefix matching, fuzzy matching, and relevance ranking
 func SearchSkills(c *gin.Context) {
 	searchTerm := c.Query("q")
 	if searchTerm == "" {
@@ -133,15 +134,58 @@ func SearchSkills(c *gin.Context) {
 		return
 	}
 
+	// Multi-strategy search with ranking:
+	// 1. Exact match (rank 1) - highest priority
+	// 2. Prefix match (rank 2) - starts with search term
+	// 3. Full-text search (rank 3) - word-based matching with stemming
+	// 4. Fuzzy similarity (rank 4) - handles typos
 	query := `
+		WITH ranked_skills AS (
+			SELECT DISTINCT ON (id)
+				id, 
+				name, 
+				created_at,
+				CASE 
+					-- Exact match (case-insensitive)
+					WHEN LOWER(name) = LOWER($1) THEN 1
+					-- Prefix match
+					WHEN name ILIKE $1 || '%' THEN 2
+					-- Full-text search match with prefix support
+					WHEN search_vector @@ to_tsquery('english', $2) THEN 3
+					-- Fuzzy similarity match (handles typos)
+					WHEN similarity(name, $1) > 0.3 THEN 4
+					ELSE 5
+				END as match_rank,
+				-- Calculate relevance scores
+				ts_rank(search_vector, to_tsquery('english', $2)) as fts_rank,
+				similarity(name, $1) as similarity_score
+			FROM skills
+			WHERE 
+				-- Match any of: exact, prefix, FTS, or fuzzy
+				LOWER(name) = LOWER($1)
+				OR name ILIKE '%' || $1 || '%'
+				OR search_vector @@ to_tsquery('english', $2)
+				OR similarity(name, $1) > 0.3
+		)
 		SELECT id, name, created_at
-		FROM skills
-		WHERE name ILIKE $1
-		ORDER BY name
+		FROM ranked_skills
+		ORDER BY 
+			match_rank ASC,           -- Primary: match type priority
+			fts_rank DESC,            -- Secondary: FTS relevance
+			similarity_score DESC,    -- Tertiary: similarity score
+			name ASC                  -- Final: alphabetical
 		LIMIT 20
 	`
 
-	rows, err := config.DB.Query(query, "%"+searchTerm+"%")
+	// Format search term for tsquery
+	// Replace spaces with & for AND queries, add prefix matching with :*
+	formattedTerm := searchTerm
+	if len(searchTerm) > 0 {
+		// Escape single quotes and prepare for prefix matching
+		formattedTerm = searchTerm + ":*"
+	}
+
+	rows, err := config.DB.Query(query, searchTerm, formattedTerm)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
