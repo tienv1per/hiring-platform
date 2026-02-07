@@ -78,13 +78,14 @@ func Login(c *gin.Context) {
 
 	// Get user from database
 	var user models.User
+	var bio, resumeURL, profilePicURL sql.NullString
 	query := `
 		SELECT id, name, email, password_hash, phone, role, bio, resume_url, profile_pic_url, created_at, updated_at
 		FROM users WHERE email = $1
 	`
 	err := config.DB.QueryRow(query, req.Email).
 		Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.Phone, &user.Role,
-			&user.Bio, &user.ResumeURL, &user.ProfilePicURL, &user.CreatedAt, &user.UpdatedAt)
+			&bio, &resumeURL, &profilePicURL, &user.CreatedAt, &user.UpdatedAt)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -92,6 +93,17 @@ func Login(c *gin.Context) {
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
+	}
+
+	// Handle nullable fields
+	if bio.Valid {
+		user.Bio = bio.String
+	}
+	if resumeURL.Valid {
+		user.ResumeURL = resumeURL.String
+	}
+	if profilePicURL.Valid {
+		user.ProfilePicURL = profilePicURL.String
 	}
 
 	// Check password

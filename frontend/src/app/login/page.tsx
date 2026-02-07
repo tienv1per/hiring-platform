@@ -34,6 +34,14 @@ export default function LoginPage() {
           description: "Invalid email or password",
         });
       } else if (result?.ok) {
+        // Get the session to extract the access token
+        const session = await fetch("/api/auth/session").then(res => res.json());
+        
+        if (session?.accessToken) {
+          // Save token to sessionStorage for API calls
+          sessionStorage.setItem("accessToken", session.accessToken);
+        }
+        
         toast.success("Login successful!");
         router.push("/dashboard");
       }
