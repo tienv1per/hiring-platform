@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function Navbar() {
@@ -15,11 +16,11 @@ export function Navbar() {
   };
 
   return (
-    <nav className="border-b">
+    <nav className="border-b bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="text-xl font-bold text-blue-600">
+            <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-500">
               JobPortal
             </Link>
             {isAuthenticated && (
@@ -96,6 +97,7 @@ export function Navbar() {
             )}
           </div>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             {isAuthenticated ? (
               <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
