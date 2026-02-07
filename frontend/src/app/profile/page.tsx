@@ -24,13 +24,15 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState("");
+  const [skillSuggestions, setSkillSuggestions] = useState<Array<{ id: string; name: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -38,13 +40,40 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (!session?.user?.id) {
+    // Wait for session to load
+    if (status === "loading") {
+      return;
+    }
+
+    // Redirect if not authenticated
+    if (status === "unauthenticated" || !session?.user?.id) {
       router.push("/login");
       return;
     }
 
     fetchProfile();
-  }, [session, router]);
+  }, [session, status, router]);
+
+  // Debounced skill search
+  useEffect(() => {
+    if (newSkill.trim().length < 2) {
+      setSkillSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await userApi.get(`/api/skills?q=${newSkill.trim()}`);
+        setSkillSuggestions(response.data || []);
+        setShowSuggestions(true);
+      } catch (error) {
+        setSkillSuggestions([]);
+      }
+    }, 300); // Debounce 300ms
+
+    return () => clearTimeout(timer);
+  }, [newSkill]);
 
   const fetchProfile = async () => {
     try {
@@ -76,15 +105,17 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddSkill = async () => {
-    if (!newSkill.trim()) return;
+  const handleAddSkill = async (skillName?: string) => {
+    const skill = skillName || newSkill.trim();
+    if (!skill) return;
 
     try {
       await userApi.post(`/api/users/${session?.user?.id}/skills`, {
-        skills: [newSkill.trim()],
+        skills: [skill],
       });
       toast.success("Skill added");
       setNewSkill("");
+      setShowSuggestions(false);
       await fetchProfile();
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to add skill");
@@ -117,7 +148,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -238,17 +269,36 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             {/* Add Skill */}
-            <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Enter a skill (e.g., JavaScript, React, Python)"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
-              />
-              <Button onClick={handleAddSkill}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
+            <div className="relative mb-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter a skill (e.g., JavaScript, React, Python)"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
+                  onFocus={() => newSkill.trim().length >= 2 && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                />
+                <Button onClick={() => handleAddSkill()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+
+              {/* Autocomplete Suggestions */}
+              {showSuggestions && skillSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {skillSuggestions.map((suggestion) => (
+                    <div
+                      key={suggestion.id}
+                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
+                      onClick={() => handleAddSkill(suggestion.name)}
+                    >
+                      {suggestion.name}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Skills List */}
