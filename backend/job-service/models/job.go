@@ -43,12 +43,14 @@ type Job struct {
 	RequiredSkills []string  `json:"required_skills" db:"required_skills"` // Array of skill names
 	CompanyID      string    `json:"company_id" db:"company_id"`
 	RecruiterID    string    `json:"recruiter_id" db:"recruiter_id"`
-	Status         string    `json:"status" db:"status"` // active, inactive, closed
+	Status         string    `json:"status" db:"status"`     // active, inactive, closed
+	TitleEmbedding []float32 `json:"-" db:"title_embedding"` // 384-dim vector for semantic search
 	CreatedAt      time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
 
 	// Joined fields (not in database)
-	CompanyName string `json:"company_name,omitempty" db:"company_name"`
+	CompanyName string  `json:"company_name,omitempty" db:"company_name"`
+	Similarity  float32 `json:"similarity,omitempty" db:"similarity"` // For search results
 }
 
 type CreateJobRequest struct {
