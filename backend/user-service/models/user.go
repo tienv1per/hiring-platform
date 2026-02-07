@@ -24,14 +24,16 @@ type UpdateProfileRequest struct {
 type Skill struct {
 	ID        string    `json:"id" db:"id"`
 	Name      string    `json:"name" db:"name"`
+	Color     string    `json:"color" db:"color"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
 type UserSkill struct {
-	UserID    string    `json:"user_id" db:"user_id"`
-	SkillID   string    `json:"skill_id" db:"skill_id"`
-	SkillName string    `json:"skill_name" db:"name"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UserID     string    `json:"user_id" db:"user_id"`
+	SkillID    string    `json:"skill_id" db:"skill_id"`
+	SkillName  string    `json:"skill_name" db:"name"`
+	SkillColor string    `json:"skill_color" db:"color"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
 type AddSkillsRequest struct {

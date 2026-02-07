@@ -30,12 +30,12 @@ func AddSkills(c *gin.Context) {
 
 	for _, skillName := range req.Skills {
 		// Check if skill exists, create if not
-		var skillID string
-		err := config.DB.QueryRow("SELECT id FROM skills WHERE name = $1", skillName).Scan(&skillID)
+		var skillID, skillColor string
+		err := config.DB.QueryRow("SELECT id, color FROM skills WHERE name = $1", skillName).Scan(&skillID, &skillColor)
 
 		if err == sql.ErrNoRows {
-			// Create new skill
-			err = config.DB.QueryRow("INSERT INTO skills (name) VALUES ($1) RETURNING id", skillName).Scan(&skillID)
+			// Create new skill with default gray color
+			err = config.DB.QueryRow("INSERT INTO skills (name, color) VALUES ($1, $2) RETURNING id, color", skillName, "gray").Scan(&skillID, &skillColor)
 			if err != nil {
 				continue // Skip this skill if creation fails
 			}
@@ -99,7 +99,7 @@ func GetUserSkills(c *gin.Context) {
 	userID := c.Param("id")
 
 	query := `
-		SELECT us.user_id, us.skill_id, s.name, us.created_at
+		SELECT us.user_id, us.skill_id, s.name, s.color, us.created_at
 		FROM user_skills us
 		JOIN skills s ON us.skill_id = s.id
 		WHERE us.user_id = $1
@@ -116,7 +116,7 @@ func GetUserSkills(c *gin.Context) {
 	skills := []models.UserSkill{}
 	for rows.Next() {
 		var skill models.UserSkill
-		if err := rows.Scan(&skill.UserID, &skill.SkillID, &skill.SkillName, &skill.CreatedAt); err != nil {
+		if err := rows.Scan(&skill.UserID, &skill.SkillID, &skill.SkillName, &skill.SkillColor, &skill.CreatedAt); err != nil {
 			continue
 		}
 		skills = append(skills, skill)
@@ -144,6 +144,7 @@ func SearchSkills(c *gin.Context) {
 			SELECT DISTINCT ON (id)
 				id, 
 				name, 
+				color,
 				created_at,
 				CASE 
 					-- Exact match (case-insensitive)
@@ -167,7 +168,7 @@ func SearchSkills(c *gin.Context) {
 				OR search_vector @@ to_tsquery('english', $2)
 				OR similarity(name, $1) > 0.3
 		)
-		SELECT id, name, created_at
+		SELECT id, name, color, created_at
 		FROM ranked_skills
 		ORDER BY 
 			match_rank ASC,           -- Primary: match type priority
@@ -195,7 +196,7 @@ func SearchSkills(c *gin.Context) {
 	skills := []models.Skill{}
 	for rows.Next() {
 		var skill models.Skill
-		if err := rows.Scan(&skill.ID, &skill.Name, &skill.CreatedAt); err != nil {
+		if err := rows.Scan(&skill.ID, &skill.Name, &skill.Color, &skill.CreatedAt); err != nil {
 			continue
 		}
 		skills = append(skills, skill)

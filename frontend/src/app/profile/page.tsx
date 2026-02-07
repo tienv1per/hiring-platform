@@ -12,6 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Plus, X, Upload } from "lucide-react";
+import { ColorPicker } from "@/components/color-picker";
+import { getSkillColorClasses, type SkillColor } from "@/lib/skill-colors";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface UserProfile {
   name: string;
@@ -20,7 +27,13 @@ interface UserProfile {
   bio: string;
   resume_url: string | null;
   profile_picture_url: string | null;
-  skills: Array<{ id: string; name: string }>;
+  skills: Array<{ id: string; skill_name: string; skill_color: string }>;
+}
+
+interface SkillSuggestion {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export default function ProfilePage() {
@@ -31,8 +44,10 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState("");
-  const [skillSuggestions, setSkillSuggestions] = useState<Array<{ id: string; name: string }>>([]);
+  const [skillSuggestions, setSkillSuggestions] = useState<SkillSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<SkillColor>("gray");
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -105,7 +120,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddSkill = async (skillName?: string) => {
+  const handleAddSkill = async (skillName?: string, color?: string) => {
     const skill = skillName || newSkill.trim();
     if (!skill) return;
 
@@ -116,6 +131,8 @@ export default function ProfilePage() {
       toast.success("Skill added");
       setNewSkill("");
       setShowSuggestions(false);
+      setShowColorPicker(false);
+      setSelectedColor("gray");
       await fetchProfile();
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to add skill");
@@ -288,33 +305,44 @@ export default function ProfilePage() {
               {/* Autocomplete Suggestions */}
               {showSuggestions && skillSuggestions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-                  {skillSuggestions.map((suggestion) => (
-                    <div
-                      key={suggestion.id}
-                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
-                      onClick={() => handleAddSkill(suggestion.name)}
-                    >
-                      {suggestion.name}
-                    </div>
-                  ))}
+                  {skillSuggestions.map((suggestion) => {
+                    const colorClasses = getSkillColorClasses(suggestion.color);
+                    return (
+                      <div
+                        key={suggestion.id}
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2"
+                        onClick={() => handleAddSkill(suggestion.name)}
+                      >
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${colorClasses.bg} ${colorClasses.text}`}>
+                          {suggestion.name}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Skills List */}
+            {/* Skills List - Colored Badges */}
             {profile.skills && profile.skills.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => (
-                  <Badge key={skill.id} variant="secondary" className="text-sm py-2 px-3">
-                    {skill.name}
-                    <button
-                      onClick={() => handleRemoveSkill(skill.id)}
-                      className="ml-2 hover:text-red-600"
+                {profile.skills.map((skill) => {
+                  const colorClasses = getSkillColorClasses(skill.skill_color);
+                  return (
+                    <div
+                      key={skill.id}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
+                      {skill.skill_name}
+                      <button
+                        onClick={() => handleRemoveSkill(skill.id)}
+                        className="hover:opacity-70 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-500 text-sm">No skills added yet</p>
