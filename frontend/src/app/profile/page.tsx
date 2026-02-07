@@ -81,7 +81,7 @@ export default function ProfilePage() {
 
     try {
       await userApi.post(`/api/users/${session?.user?.id}/skills`, {
-        skill_names: [newSkill.trim()],
+        skills: [newSkill.trim()],
       });
       toast.success("Skill added");
       setNewSkill("");

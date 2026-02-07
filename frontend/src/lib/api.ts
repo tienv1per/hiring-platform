@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
+import { getSession } from "next-auth/react";
 
 // API Base URLs
 const API_URLS = {
@@ -18,13 +19,13 @@ const createApiClient = (baseURL: string): AxiosInstance => {
     },
   });
 
-  // Request interceptor to add auth token
+  // Request interceptor to add auth token from NextAuth session
   instance.interceptors.request.use(
-    (config) => {
-      // Get token from session storage or context
-      const token = sessionStorage.getItem("accessToken");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    async (config) => {
+      // Get token from NextAuth session
+      const session = await getSession();
+      if (session?.accessToken) {
+        config.headers.Authorization = `Bearer ${session.accessToken}`;
       }
       return config;
     },
@@ -38,9 +39,12 @@ const createApiClient = (baseURL: string): AxiosInstance => {
     (response) => response,
     (error: AxiosError) => {
       if (error.response?.status === 401) {
-        // Redirect to login on unauthorized
+        // Clear session and redirect to login on unauthorized
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          // Only redirect if not already on the login page
+          if (!window.location.pathname.startsWith("/login")) {
+            window.location.href = "/login";
+          }
         }
       }
       return Promise.reject(error);
@@ -55,13 +59,3 @@ export const authApi = createApiClient(API_URLS.auth);
 export const userApi = createApiClient(API_URLS.user);
 export const jobApi = createApiClient(API_URLS.job);
 export const utilityApi = createApiClient(API_URLS.utility);
-
-// Helper function to set auth token
-export const setAuthToken = (token: string) => {
-  sessionStorage.setItem("accessToken", token);
-};
-
-// Helper function to clear auth token
-export const clearAuthToken = () => {
-  sessionStorage.removeItem("accessToken");
-};

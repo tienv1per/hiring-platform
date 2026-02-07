@@ -21,13 +21,14 @@ func GetProfile(c *gin.Context) {
 	}
 
 	var user models.User
+	var bio, resumeURL, profilePicURL sql.NullString
 	query := `
 		SELECT id, name, email, phone, role, bio, resume_url, profile_pic_url, created_at, updated_at
 		FROM users WHERE id = $1
 	`
 	err := config.DB.QueryRow(query, userID).Scan(
 		&user.ID, &user.Name, &user.Email, &user.Phone, &user.Role,
-		&user.Bio, &user.ResumeURL, &user.ProfilePicURL, &user.CreatedAt, &user.UpdatedAt,
+		&bio, &resumeURL, &profilePicURL, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -36,6 +37,17 @@ func GetProfile(c *gin.Context) {
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
+	}
+
+	// Handle nullable fields
+	if bio.Valid {
+		user.Bio = bio.String
+	}
+	if resumeURL.Valid {
+		user.ResumeURL = resumeURL.String
+	}
+	if profilePicURL.Valid {
+		user.ProfilePicURL = profilePicURL.String
 	}
 
 	c.JSON(http.StatusOK, user)
@@ -70,14 +82,26 @@ func UpdateProfile(c *gin.Context) {
 	`
 
 	var user models.User
+	var bio, resumeURL, profilePicURL sql.NullString
 	err := config.DB.QueryRow(query, req.Name, req.Phone, req.Bio, userID).Scan(
 		&user.ID, &user.Name, &user.Email, &user.Phone, &user.Role,
-		&user.Bio, &user.ResumeURL, &user.ProfilePicURL, &user.CreatedAt, &user.UpdatedAt,
+		&bio, &resumeURL, &profilePicURL, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
 		return
+	}
+
+	// Handle nullable fields
+	if bio.Valid {
+		user.Bio = bio.String
+	}
+	if resumeURL.Valid {
+		user.ResumeURL = resumeURL.String
+	}
+	if profilePicURL.Valid {
+		user.ProfilePicURL = profilePicURL.String
 	}
 
 	c.JSON(http.StatusOK, user)
