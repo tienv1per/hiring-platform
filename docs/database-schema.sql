@@ -4,12 +4,29 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Drop existing types if they exist (for idempotent migrations)
+DROP TYPE IF EXISTS application_status CASCADE;
+DROP TYPE IF EXISTS job_status CASCADE;
+DROP TYPE IF EXISTS work_location CASCADE;
+DROP TYPE IF EXISTS job_type CASCADE;
+DROP TYPE IF EXISTS user_role CASCADE;
+
 -- Create ENUM types
 CREATE TYPE user_role AS ENUM ('jobseeker', 'recruiter');
 CREATE TYPE job_type AS ENUM ('full-time', 'part-time', 'contract', 'internship');
 CREATE TYPE work_location AS ENUM ('remote', 'onsite', 'hybrid');
 CREATE TYPE application_status AS ENUM ('pending', 'viewed', 'shortlisted', 'interviewed', 'offered', 'rejected');
 CREATE TYPE job_status AS ENUM ('active', 'inactive', 'closed');
+
+-- Drop existing tables if they exist (for idempotent migrations)
+-- Drop in reverse order to handle foreign key constraints
+DROP TABLE IF EXISTS subscriptions CASCADE;
+DROP TABLE IF EXISTS applications CASCADE;
+DROP TABLE IF EXISTS jobs CASCADE;
+DROP TABLE IF EXISTS companies CASCADE;
+DROP TABLE IF EXISTS user_skills CASCADE;
+DROP TABLE IF EXISTS skills CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
 -- Users Table
 CREATE TABLE users (
@@ -106,6 +123,14 @@ CREATE INDEX idx_applications_job ON applications(job_id);
 CREATE INDEX idx_applications_applicant ON applications(applicant_id);
 CREATE INDEX idx_applications_status ON applications(status);
 CREATE INDEX idx_companies_recruiter ON companies(recruiter_id);
+
+-- Drop existing function and triggers if they exist
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_companies_updated_at ON companies;
+DROP TRIGGER IF EXISTS update_jobs_updated_at ON jobs;
+DROP TRIGGER IF EXISTS update_applications_updated_at ON applications;
+DROP TRIGGER IF EXISTS update_subscriptions_updated_at ON subscriptions;
+DROP FUNCTION IF EXISTS update_updated_at_column();
 
 -- Create trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
