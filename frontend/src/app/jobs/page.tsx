@@ -30,6 +30,7 @@ export default function JobsPage() {
     location: "",
     job_type: "all",
     work_location: "all",
+    isSemantic: false,
   });
 
   const fetchJobs = async () => {
@@ -46,7 +47,16 @@ export default function JobsPage() {
       if (filters.job_type !== "all") params.job_type = filters.job_type;
       if (filters.work_location !== "all") params.work_location = filters.work_location;
 
-      const response = await jobApi.get("/api/jobs", { params });
+      let response;
+      if (filters.isSemantic && filters.keyword) {
+        // Use semantic search endpoint
+        response = await jobApi.get("/api/jobs/semantic", { 
+          params: { q: filters.keyword } 
+        });
+      } else {
+        // Use standard search endpoint
+        response = await jobApi.get("/api/jobs", { params });
+      }
       
       setJobs(response.data.jobs || []);
       
@@ -93,6 +103,8 @@ export default function JobsPage() {
             filters={filters}
             onFilterChange={handleFilterChange}
             onSearch={handleSearch}
+            isSemantic={filters.isSemantic}
+            onSemanticToggle={(enabled) => setFilters(prev => ({ ...prev, isSemantic: enabled }))}
           />
         </div>
 

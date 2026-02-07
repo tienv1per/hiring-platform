@@ -21,6 +21,9 @@ func main() {
 	config.InitDB()
 	defer config.CloseDB()
 
+	// Initialize embedding service
+	handlers.InitEmbeddingService()
+
 	// Set up Gin router
 	router := gin.Default()
 
@@ -35,8 +38,9 @@ func main() {
 	// Public job routes (no auth required)
 	publicJobs := router.Group("/api/jobs")
 	{
-		publicJobs.GET("", handlers.SearchJobs)     // Search with filters
-		publicJobs.GET("/:id", handlers.GetJobByID) // Get job details
+		publicJobs.GET("", handlers.SearchJobs)                  // Keyword search
+		publicJobs.GET("/semantic", handlers.SemanticSearchJobs) // Semantic search
+		publicJobs.GET("/:id", handlers.GetJobByID)              // Get job details
 		publicJobs.GET("/company/:companyId", handlers.GetJobsByCompany)
 	}
 

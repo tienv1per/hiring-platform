@@ -17,6 +17,7 @@ interface JobCardProps {
     salary?: string;
     required_skills: string[];
     created_at: string;
+    similarity?: number;
   };
 }
 
@@ -47,7 +48,14 @@ export function JobCard({ job }: JobCardProps) {
               {job.company_name}
             </CardDescription>
           </div>
-          <Clock className="h-4 w-4 text-gray-400" />
+          <div className="flex items-center gap-2">
+            {job.similarity && (
+              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
+                AI Match: {Math.round(job.similarity * 100)}%
+              </Badge>
+            )}
+            <Clock className="h-4 w-4 text-gray-400" />
+          </div>
         </div>
       </CardHeader>
       <CardContent>

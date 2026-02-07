@@ -73,6 +73,7 @@ def embed():
         ort_inputs = {
             'input_ids': encoded_input['input_ids'].astype(np.int64),
             'attention_mask': encoded_input['attention_mask'].astype(np.int64),
+            'token_type_ids': encoded_input['token_type_ids'].astype(np.int64)
         }
         
         ort_outputs = session.run(None, ort_inputs)
@@ -119,6 +120,7 @@ def embed_batch():
         ort_inputs = {
             'input_ids': encoded_input['input_ids'].astype(np.int64),
             'attention_mask': encoded_input['attention_mask'].astype(np.int64),
+            'token_type_ids': encoded_input['token_type_ids'].astype(np.int64)
         }
         
         ort_outputs = session.run(None, ort_inputs)

@@ -14,9 +14,11 @@ interface JobFiltersProps {
   };
   onFilterChange: (key: string, value: string) => void;
   onSearch: () => void;
+  isSemantic: boolean;
+  onSemanticToggle: (enabled: boolean) => void;
 }
 
-export function JobFilters({ filters, onFilterChange, onSearch }: JobFiltersProps) {
+export function JobFilters({ filters, onFilterChange, onSearch, isSemantic, onSemanticToggle }: JobFiltersProps) {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
       {/* Search Bar */}

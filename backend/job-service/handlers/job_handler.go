@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -53,6 +54,15 @@ func CreateJob(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create job"})
 		return
 	}
+
+	// Generate and save embedding asynchronously
+	go func() {
+		if err := generateJobEmbedding(job.ID, job.Title); err != nil {
+			log.Printf("Failed to generate embedding for job %s: %v", job.ID, err)
+		} else {
+			log.Printf("✅ Generated embedding for job: %s", job.Title)
+		}
+	}()
 
 	c.JSON(http.StatusCreated, job)
 }
@@ -116,6 +126,17 @@ func UpdateJob(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update job"})
 		return
+	}
+
+	// Re-generate embedding if title changed
+	if req.Title != "" {
+		go func() {
+			if err := generateJobEmbedding(job.ID, job.Title); err != nil {
+				log.Printf("Failed to regenerate embedding for job %s: %v", job.ID, err)
+			} else {
+				log.Printf("✅ Regenerated embedding for job: %s", job.Title)
+			}
+		}()
 	}
 
 	c.JSON(http.StatusOK, job)

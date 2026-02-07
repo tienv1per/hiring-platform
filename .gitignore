@@ -54,3 +54,5 @@ docker-compose.override.yml
 tmp/
 temp/
 *.tmp
+
+all-MiniLm-L6-v2.onnx
