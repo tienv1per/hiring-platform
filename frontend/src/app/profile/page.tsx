@@ -27,7 +27,7 @@ interface UserProfile {
   bio: string;
   resume_url: string | null;
   profile_picture_url: string | null;
-  skills: Array<{ id: string; skill_name: string; skill_color: string }>;
+  skills: Array<{ skill_id: string; skill_name: string; skill_color: string }>;
 }
 
 interface SkillSuggestion {
@@ -48,6 +48,7 @@ export default function ProfilePage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedColor, setSelectedColor] = useState<SkillColor>("gray");
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [pendingSkills, setPendingSkills] = useState<Array<{ name: string; color: string }>>([]);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -120,23 +121,68 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddSkill = async (skillName?: string, color?: string) => {
-    const skill = skillName || newSkill.trim();
-    if (!skill) return;
+  const handleAddSkill = async () => {
+    // Handle both typed input and pending skills
+    const typedSkill = newSkill.trim();
+    const skillsToAdd = [...pendingSkills];
+    
+    // Add typed skill if exists and not already in pending
+    if (typedSkill) {
+      const exists = skillsToAdd.some(s => s.name.toLowerCase() === typedSkill.toLowerCase());
+      if (!exists) {
+        skillsToAdd.push({ name: typedSkill, color: "gray" });
+      }
+    }
+
+    if (skillsToAdd.length === 0) return;
+
+    // Check for duplicates with existing profile skills
+    const duplicates = skillsToAdd.filter(skill => 
+      profile?.skills?.some(s => s.skill_name.toLowerCase() === skill.name.toLowerCase())
+    );
+
+    if (duplicates.length > 0) {
+      toast.error(`${duplicates[0].name} already added`);
+      return;
+    }
 
     try {
+      // Add all skills at once
       await userApi.post(`/api/users/${session?.user?.id}/skills`, {
-        skills: [skill],
+        skills: skillsToAdd.map(s => s.name),
       });
-      toast.success("Skill added");
+      
+      toast.success(`Added ${skillsToAdd.length} skill${skillsToAdd.length > 1 ? 's' : ''}`);
+      
+      // Clear pending and input
+      setPendingSkills([]);
       setNewSkill("");
       setShowSuggestions(false);
-      setShowColorPicker(false);
-      setSelectedColor("gray");
+      
       await fetchProfile();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to add skill");
+      toast.error(error.response?.data?.error || "Failed to add skills");
     }
+  };
+
+  const handleSelectSkill = (skillName: string, color: string) => {
+    // Check if already in pending or profile
+    const existsInPending = pendingSkills.some(s => s.name.toLowerCase() === skillName.toLowerCase());
+    const existsInProfile = profile?.skills?.some(s => s.skill_name.toLowerCase() === skillName.toLowerCase());
+    
+    if (existsInPending || existsInProfile) {
+      toast.error("Skill already selected");
+      return;
+    }
+
+    // Add to pending (staging area)
+    setPendingSkills(prev => [...prev, { name: skillName, color }]);
+    setNewSkill("");
+    setShowSuggestions(false);
+  };
+
+  const handleRemovePendingSkill = (skillName: string) => {
+    setPendingSkills(prev => prev.filter(s => s.name !== skillName));
   };
 
   const handleRemoveSkill = async (skillId: string) => {
@@ -285,6 +331,34 @@ export default function ProfilePage() {
             <CardDescription>Add skills to showcase your expertise</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Staged Skills - Show skills ready to be added */}
+            {pendingSkills.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  Ready to add ({pendingSkills.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {pendingSkills.map((skill, index) => {
+                    const colorClasses = getSkillColorClasses(skill.color);
+                    return (
+                      <div
+                        key={`pending-${index}`}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}
+                      >
+                        {skill.name}
+                        <button
+                          onClick={() => handleRemovePendingSkill(skill.name)}
+                          className="hover:opacity-70 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Add Skill */}
             <div className="relative mb-4">
               <div className="flex gap-2">
@@ -292,13 +366,21 @@ export default function ProfilePage() {
                   placeholder="Enter a skill (e.g., JavaScript, React, Python)"
                   value={newSkill}
                   onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSkill();
+                    }
+                  }}
                   onFocus={() => newSkill.trim().length >= 2 && setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 />
-                <Button onClick={() => handleAddSkill()}>
+                <Button 
+                  onClick={() => handleAddSkill()}
+                  disabled={pendingSkills.length === 0 && !newSkill.trim()}
+                >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add
+                  Add {pendingSkills.length > 0 && `(${pendingSkills.length})`}
                 </Button>
               </div>
 
@@ -311,7 +393,7 @@ export default function ProfilePage() {
                       <div
                         key={suggestion.id}
                         className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2"
-                        onClick={() => handleAddSkill(suggestion.name)}
+                        onClick={() => handleSelectSkill(suggestion.name, suggestion.color)}
                       >
                         <span className={`px-2 py-1 rounded text-xs font-medium ${colorClasses.bg} ${colorClasses.text}`}>
                           {suggestion.name}
@@ -330,12 +412,12 @@ export default function ProfilePage() {
                   const colorClasses = getSkillColorClasses(skill.skill_color);
                   return (
                     <div
-                      key={skill.id}
+                      key={skill.skill_id}
                       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}
                     >
                       {skill.skill_name}
                       <button
-                        onClick={() => handleRemoveSkill(skill.id)}
+                        onClick={() => handleRemoveSkill(skill.skill_id)}
                         className="hover:opacity-70 transition-opacity"
                       >
                         <X className="h-3 w-3" />
