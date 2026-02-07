@@ -8,11 +8,12 @@ from transformers import AutoTokenizer
 import onnxruntime as ort
 import numpy as np
 import os
+from models import EmbedRequest, BatchEmbedRequest, EmbedResponse, BatchEmbedResponse
 
 app = Flask(__name__)
 
 # Model configuration
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "all-MiniLM-L6-v2.onnx")
+MODEL_PATH = "models/all-MiniLM-L6-v2.onnx"
 TOKENIZER_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Load tokenizer
@@ -54,11 +55,12 @@ def embed():
     """Generate embeddings for input text"""
     try:
         data = request.get_json()
+        try:
+            req = EmbedRequest(**data)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
         
-        if not data or 'text' not in data:
-            return jsonify({"error": "Missing 'text' field"}), 400
-        
-        text = data['text']
+        text = req.text
         
         # Tokenize
         encoded_input = tokenizer(
@@ -98,14 +100,12 @@ def embed_batch():
     """Generate embeddings for multiple texts"""
     try:
         data = request.get_json()
+        try:
+            req = BatchEmbedRequest(**data)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
         
-        if not data or 'texts' not in data:
-            return jsonify({"error": "Missing 'texts' field"}), 400
-        
-        texts = data['texts']
-        
-        if not isinstance(texts, list):
-            return jsonify({"error": "'texts' must be a list"}), 400
+        texts = req.texts
         
         # Tokenize all texts
         encoded_input = tokenizer(
