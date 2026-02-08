@@ -183,14 +183,15 @@ func GetJobByID(c *gin.Context) {
 	jobID := c.Param("id")
 
 	var job models.Job
+	// Explicitly defining columns to avoid * and ensure order matches Scan
 	query := `
 		SELECT j.id, j.title, j.description, j.salary, j.location, j.job_type, j.work_location,
 		       j.openings, j.required_skills, j.company_id, j.recruiter_id, j.status, j.created_at, j.updated_at,
 		       c.name as company_name
 		FROM jobs j
 		JOIN companies c ON j.company_id = c.id
-		WHERE j.id = $1
-	`
+		WHERE j.id = $1`
+
 	err := config.DB.QueryRow(query, jobID).
 		Scan(&job.ID, &job.Title, &job.Description, &job.Salary, &job.Location, &job.JobType,
 			&job.WorkLocation, &job.Openings, pq.Array(&job.RequiredSkills), &job.CompanyID,
