@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"mime/multipart"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2"
@@ -41,9 +43,17 @@ func UploadToCloudinary(file *multipart.FileHeader, folder string) (string, erro
 	// Helper for bool pointers
 	boolPtr := func(b bool) *bool { return &b }
 
+	// Determine resource type based on file extension
+	// PDFs and documents should use "raw" to preserve the file properly
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	resourceType := "auto"
+	if ext == ".pdf" || ext == ".doc" || ext == ".docx" || ext == ".txt" {
+		resourceType = "raw"
+	}
+
 	uploadResult, err := cld.Upload.Upload(ctx, src, uploader.UploadParams{
 		Folder:         folder,
-		ResourceType:   "auto",
+		ResourceType:   resourceType,
 		UseFilename:    boolPtr(true),
 		UniqueFilename: boolPtr(true),
 	})
