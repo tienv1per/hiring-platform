@@ -36,7 +36,7 @@ func SemanticSearchJobs(c *gin.Context) {
 		return
 	}
 
-	threshold := float32(0.6) // Minimum similarity score (60%)
+	threshold := float32(0.35) // Minimum similarity score (35%) - allows broader semantic matches
 
 	// Generate embedding for search query
 	queryEmbedding, err := embeddingService.GetEmbedding(query)
