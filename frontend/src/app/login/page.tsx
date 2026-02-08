@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,23 +19,30 @@ export default function LoginPage() {
     password: "",
   });
 
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
+  }, [status, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       const result = await signIn("credentials", {
+        redirect: false,
         email: formData.email,
         password: formData.password,
-        redirect: false,
       });
 
       if (result?.error) {
         toast.error("Login failed", {
           description: "Invalid email or password",
         });
-      } else if (result?.ok) {
+      } else {
         toast.success("Login successful!");
+        router.refresh();
         router.push("/dashboard");
       }
     } catch (error) {
