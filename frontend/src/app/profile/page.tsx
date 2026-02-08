@@ -13,13 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Plus, X, Upload, Brain, Sparkles, Target, FileText, CheckCircle2, TrendingUp, Shield, Zap } from "lucide-react";
-import { ColorPicker } from "@/components/color-picker";
 import { getSkillColorClasses, type SkillColor } from "@/lib/skill-colors";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 interface UserProfile {
   name: string;
