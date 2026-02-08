@@ -114,6 +114,15 @@ export function Navbar() {
                         />
                       )}
                     </Link>
+                    <Link href="/report" className={navLinkClass("/report")}>
+                      Report
+                      {pathname === "/report" && (
+                        <motion.div
+                          layoutId="navbar-indicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                        />
+                      )}
+                    </Link>
                   </>
                 )}
               </div>
