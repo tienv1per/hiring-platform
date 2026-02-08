@@ -7,15 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 import { Building2, MapPin, Briefcase, DollarSign, Calendar, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
-import dynamic from "next/dynamic";
-
-// Import markdown renderer (no SSR to avoid hydration issues)
-const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown), {
-  ssr: false,
-});
 
 interface JobDetails {
   id: string;
@@ -149,13 +144,8 @@ export default function JobDetailsPage() {
 
         {/* Job Description */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Job Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose dark:prose-invert max-w-none">
-              <MDEditor source={job.description} />
-            </div>
+          <CardContent className="pt-6">
+            <MarkdownRenderer content={job.description} />
           </CardContent>
         </Card>
 

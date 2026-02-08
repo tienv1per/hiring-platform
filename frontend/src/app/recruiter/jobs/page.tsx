@@ -130,10 +130,17 @@ export default function RecruiterJobsPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl">{job.title}</CardTitle>
+                      <Link href={`/jobs/${job.id}`} className="hover:text-blue-600 transition-colors">
+                        <CardTitle className="text-xl cursor-pointer">{job.title}</CardTitle>
+                      </Link>
                       <CardDescription>{job.company_name} · {job.location}</CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      <Link href={`/jobs/${job.id}`}>
+                        <Button size="sm" variant="secondary">
+                          View
+                        </Button>
+                      </Link>
                       <Link href={`/recruiter/jobs/${job.id}/edit`}>
                         <Button size="sm" variant="outline">
                           Edit
