@@ -63,55 +63,38 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
         }
 
         /* Lists */
-        .markdown-content ul,
-        .markdown-content ol {
+        .markdown-content ul {
+          list-style-type: disc;
           margin-top: 0.5rem;
           margin-bottom: 1rem;
-          padding-left: 0;
-          list-style: none;
+          padding-left: 1.5rem;
+        }
+
+        .markdown-content ol {
+          list-style-type: decimal;
+          margin-top: 0.5rem;
+          margin-bottom: 1rem;
+          padding-left: 1.5rem;
         }
 
         .markdown-content li {
-          position: relative;
-          padding-left: 1.75rem;
-          margin-bottom: 0.625rem;
+          margin-bottom: 0.5rem;
           line-height: 1.7;
           color: hsl(var(--muted-foreground));
+          padding-left: 0.25rem;
         }
 
-        .markdown-content ul > li::before {
-          content: "";
-          position: absolute;
-          left: 0.5rem;
-          top: 0.75rem;
-          width: 6px;
-          height: 6px;
-          background-color: hsl(var(--primary));
-          border-radius: 50%;
-        }
-
-        .markdown-content ol {
-          counter-reset: list-counter;
-        }
-
-        .markdown-content ol > li {
-          counter-increment: list-counter;
-        }
-
-        .markdown-content ol > li::before {
-          content: counter(list-counter) ".";
-          position: absolute;
-          left: 0;
-          top: 0;
-          font-weight: 500;
+        .markdown-content li::marker {
           color: hsl(var(--primary));
+          font-weight: 500;
         }
 
         /* Nested lists */
         .markdown-content li ul,
         .markdown-content li ol {
-          margin-top: 0.5rem;
-          margin-bottom: 0.5rem;
+          margin-top: 0.25rem;
+          margin-bottom: 0.25rem;
+          margin-left: 0.5rem;
         }
 
         /* Links */
