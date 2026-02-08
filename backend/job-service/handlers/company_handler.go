@@ -147,3 +147,34 @@ func GetCompany(c *gin.Context) {
 
 	c.JSON(http.StatusOK, company)
 }
+
+// GetCompanies lists all companies for the authenticated recruiter
+func GetCompanies(c *gin.Context) {
+	recruiterID := c.GetString("user_id")
+
+	query := `
+		SELECT id, name, description, website, logo_url, recruiter_id, created_at, updated_at
+		FROM companies
+		WHERE recruiter_id = $1
+		ORDER BY created_at DESC
+	`
+	rows, err := config.DB.Query(query, recruiterID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+	defer rows.Close()
+
+	var companies []models.Company
+	for rows.Next() {
+		var company models.Company
+		if err := rows.Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
+			&company.RecruiterID, &company.CreatedAt, &company.UpdatedAt); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan company"})
+			return
+		}
+		companies = append(companies, company)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"companies": companies})
+}

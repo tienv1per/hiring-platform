@@ -27,6 +27,11 @@ fi
 # Create logs directory if it doesn't exist
 mkdir -p "${LOGS_DIR}"
 
+# Clear all existing log files for a fresh start
+echo -e "${YELLOW}🧹 Clearing old log files...${NC}"
+rm -f "${LOGS_DIR}"/*.log "${LOGS_DIR}"/*.pid 2>/dev/null
+echo -e "${GREEN}✓${NC} Log files cleared"
+
 # Function to start a service
 start_service() {
     local service_name=$1

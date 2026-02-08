@@ -44,12 +44,21 @@ func UploadToCloudinary(file *multipart.FileHeader, folder string) (string, erro
 	// Helper for bool pointers
 	boolPtr := func(b bool) *bool { return &b }
 
-	// Determine resource type based on file extension
-	// PDFs and documents should use "raw" to preserve the file properly
+	// Determine resource type based on folder OR file extension
+	// "resumes" folder should ALWAYS use "raw" for PDFs/documents
+	// This is more reliable than file extension detection
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	resourceType := "auto"
-	if ext == ".pdf" || ext == ".doc" || ext == ".docx" || ext == ".txt" {
+
+	// Use folder name to determine resource type (more reliable)
+	if folder == "resumes" {
 		resourceType = "raw"
+		log.Printf("Upload: folder='%s', filename='%s', ext='%s' -> forcing resourceType='raw'", folder, file.Filename, ext)
+	} else if ext == ".pdf" || ext == ".doc" || ext == ".docx" || ext == ".txt" {
+		resourceType = "raw"
+		log.Printf("Upload: folder='%s', filename='%s', ext='%s' -> resourceType='raw'", folder, file.Filename, ext)
+	} else {
+		log.Printf("Upload: folder='%s', filename='%s', ext='%s' -> resourceType='auto'", folder, file.Filename, ext)
 	}
 
 	uploadResult, err := cld.Upload.Upload(ctx, src, uploader.UploadParams{
@@ -68,7 +77,5 @@ func UploadToCloudinary(file *multipart.FileHeader, folder string) (string, erro
 	log.Printf("Cloudinary upload success - URL: %s, ResourceType: %s, Format: %s, PublicID: %s",
 		uploadResult.SecureURL, uploadResult.ResourceType, uploadResult.Format, uploadResult.PublicID)
 
-	// For raw files (PDFs), the SecureURL should work directly
-	// But some browsers may need the file served with proper Content-Type
 	return uploadResult.SecureURL, nil
 }

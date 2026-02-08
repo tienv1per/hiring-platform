@@ -58,6 +58,7 @@ func main() {
 		// Company management (recruiters only)
 		companies := auth.Group("/companies")
 		{
+			companies.GET("", handlers.GetCompanies) // List recruiter's companies
 			companies.POST("", middleware.RecruiterOnly(), handlers.CreateCompany)
 			companies.PUT("/:id", middleware.RecruiterOnly(), handlers.UpdateCompany)
 			companies.DELETE("/:id", middleware.RecruiterOnly(), handlers.DeleteCompany)
