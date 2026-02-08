@@ -1,0 +1,69 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Auth Service logs
+  - job_name: auth-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: auth-service
+          service: auth-service
+          __path__: /var/log/app/auth-service*.log
+
+  # User Service logs
+  - job_name: user-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: user-service
+          service: user-service
+          __path__: /var/log/app/user-service*.log
+
+  # Job Service logs
+  - job_name: job-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: job-service
+          service: job-service
+          __path__: /var/log/app/job-service*.log
+
+  # Utility Service logs
+  - job_name: utility-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: utility-service
+          service: utility-service
+          __path__: /var/log/app/utility-service*.log
+
+  # Embedding Service logs
+  - job_name: embedding-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: embedding-service
+          service: embedding-service
+          __path__: /var/log/app/embedding-service*.log
+
+  # All logs fallback
+  - job_name: all-services
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: job-portal
+          __path__: /var/log/app/*.log

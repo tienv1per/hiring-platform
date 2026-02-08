@@ -34,6 +34,35 @@ services:
       - job-portal-network
     depends_on:
       - prometheus
+      - loki
+    restart: unless-stopped
+
+  # Loki - Log aggregation
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  # Promtail - Log collector
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml
+      - ../logs:/var/log/app:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - job-portal-network
+    depends_on:
+      - loki
     restart: unless-stopped
 
 networks:
@@ -43,3 +72,4 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  loki-data:
