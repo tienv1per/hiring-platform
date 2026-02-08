@@ -55,6 +55,7 @@ func main() {
 	publicCompanies := router.Group("/api/companies")
 	{
 		publicCompanies.GET("/:id", handlers.GetCompany)
+		publicCompanies.GET("/all", handlers.GetAllCompanies)
 	}
 
 	// Protected routes (require authentication)

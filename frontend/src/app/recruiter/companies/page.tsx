@@ -253,12 +253,18 @@ export default function CompaniesPage() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(company)}
+                      variant="default"
+                      onClick={() => router.push(`/companies/${company.id}`)}
                       className="flex-1"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Edit
+                      View Details
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(company)}
+                    >
+                      <Pencil className="h-3 w-3" />
                     </Button>
                     <Button
                       size="sm"

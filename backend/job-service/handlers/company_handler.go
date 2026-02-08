@@ -205,3 +205,34 @@ func GetCompanies(c *gin.Context) {
 	log.Printf("GetCompanies: returning %d companies for recruiter %s", len(companies), recruiterID)
 	c.JSON(http.StatusOK, gin.H{"companies": companies})
 }
+
+// GetAllCompanies lists all companies (public endpoint for browsing)
+func GetAllCompanies(c *gin.Context) {
+	query := `
+		SELECT id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
+		FROM companies
+		ORDER BY rating DESC NULLS LAST, created_at DESC
+		LIMIT 100
+	`
+	rows, err := config.DB.Query(query)
+	if err != nil {
+		log.Printf("GetAllCompanies: database error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+	defer rows.Close()
+
+	var companies []models.Company
+	for rows.Next() {
+		var company models.Company
+		if err := rows.Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
+			&company.RecruiterID, &company.Industry, &company.CompanySize, &company.FoundedYear, &company.Headquarters,
+			&company.Rating, &company.CreatedAt, &company.UpdatedAt); err != nil {
+			log.Printf("GetAllCompanies: scan error: %v", err)
+			continue
+		}
+		companies = append(companies, company)
+	}
+
+	c.JSON(http.StatusOK, companies)
+}
