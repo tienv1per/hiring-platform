@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -59,8 +60,15 @@ func UploadToCloudinary(file *multipart.FileHeader, folder string) (string, erro
 	})
 
 	if err != nil {
+		log.Printf("Cloudinary upload error: %v", err)
 		return "", err
 	}
 
+	// Log the upload result for debugging
+	log.Printf("Cloudinary upload success - URL: %s, ResourceType: %s, Format: %s, PublicID: %s",
+		uploadResult.SecureURL, uploadResult.ResourceType, uploadResult.Format, uploadResult.PublicID)
+
+	// For raw files (PDFs), the SecureURL should work directly
+	// But some browsers may need the file served with proper Content-Type
 	return uploadResult.SecureURL, nil
 }
