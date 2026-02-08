@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Brain, Sparkles } from "lucide-react";
 
 interface JobFiltersProps {
   filters: {
@@ -20,45 +20,64 @@ interface JobFiltersProps {
 
 export function JobFilters({ filters, onFilterChange, onSearch, isSemantic, onSemanticToggle }: JobFiltersProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
-      {/* Search Bar */}
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+    <div className="max-w-4xl mx-auto">
+      {/* Main Search Bar */}
+      <div className="relative mb-6">
+        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-20 dark:opacity-30" />
+        <div className="relative bg-white dark:bg-[#0A0F1C] border border-gray-200 dark:border-white/10 rounded-2xl p-2 flex items-center shadow-xl">
+          <div className="p-3">
+            <Brain className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          </div>
           <Input
-            placeholder="Search by job title, skills, or keywords..."
+            placeholder="Describe your ideal job... e.g., 'Senior React developer at a fintech startup'"
             value={filters.keyword}
             onChange={(e) => onFilterChange("keyword", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSearch()}
-            className="pl-10"
+            className="flex-1 border-0 bg-transparent text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
+          <Button
+            onClick={onSearch}
+            className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Search
+          </Button>
         </div>
-        <Button onClick={onSearch}>
-          <Search className="h-4 w-4 mr-2" />
-          Search
-        </Button>
       </div>
 
-      {/* Filters Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Location */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Location</label>
-          <Input
-            placeholder="City or remote"
-            value={filters.location}
-            onChange={(e) => onFilterChange("location", e.target.value)}
-          />
-        </div>
+      {/* AI Toggle + Filters */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        {/* Semantic Toggle */}
+        <button
+          onClick={() => onSemanticToggle(!isSemantic)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            isSemantic
+              ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30"
+              : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10"
+          }`}
+        >
+          <Sparkles className={`w-4 h-4 ${isSemantic ? "text-indigo-600 dark:text-indigo-400" : ""}`} />
+          {isSemantic ? "AI Semantic Search Active" : "Enable AI Search"}
+        </button>
 
-        {/* Job Type */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Job Type</label>
+        {/* Filter Dropdowns */}
+        <div className="flex flex-wrap gap-3">
+          {/* Location */}
+          <div className="w-40">
+            <Input
+              placeholder="Location"
+              value={filters.location}
+              onChange={(e) => onFilterChange("location", e.target.value)}
+              className="h-10 rounded-xl bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-sm"
+            />
+          </div>
+
+          {/* Job Type */}
           <Select value={filters.job_type} onValueChange={(value) => onFilterChange("job_type", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="All types" />
+            <SelectTrigger className="w-36 h-10 rounded-xl bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-sm">
+              <SelectValue placeholder="Job Type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-[#0A0F1C] border-gray-200 dark:border-white/10 rounded-xl">
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="full-time">Full Time</SelectItem>
               <SelectItem value="part-time">Part Time</SelectItem>
@@ -66,16 +85,13 @@ export function JobFilters({ filters, onFilterChange, onSearch, isSemantic, onSe
               <SelectItem value="internship">Internship</SelectItem>
             </SelectContent>
           </Select>
-        </div>
 
-        {/* Work Location */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Work Location</label>
+          {/* Work Location */}
           <Select value={filters.work_location} onValueChange={(value) => onFilterChange("work_location", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="All locations" />
+            <SelectTrigger className="w-36 h-10 rounded-xl bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-sm">
+              <SelectValue placeholder="Work Location" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-[#0A0F1C] border-gray-200 dark:border-white/10 rounded-xl">
               <SelectItem value="all">All Locations</SelectItem>
               <SelectItem value="remote">Remote</SelectItem>
               <SelectItem value="onsite">Onsite</SelectItem>
