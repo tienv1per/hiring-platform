@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -152,6 +153,16 @@ func GetCompany(c *gin.Context) {
 func GetCompanies(c *gin.Context) {
 	recruiterID := c.GetString("user_id")
 
+	// Log for debugging
+	log.Printf("GetCompanies called with recruiter_id: %s", recruiterID)
+
+	// If no recruiter ID, return empty list (not an error)
+	if recruiterID == "" {
+		log.Printf("GetCompanies: no recruiter_id in context, returning empty list")
+		c.JSON(http.StatusOK, gin.H{"companies": []models.Company{}})
+		return
+	}
+
 	query := `
 		SELECT id, name, description, website, logo_url, recruiter_id, created_at, updated_at
 		FROM companies
@@ -160,6 +171,7 @@ func GetCompanies(c *gin.Context) {
 	`
 	rows, err := config.DB.Query(query, recruiterID)
 	if err != nil {
+		log.Printf("GetCompanies: database error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
@@ -170,11 +182,13 @@ func GetCompanies(c *gin.Context) {
 		var company models.Company
 		if err := rows.Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
 			&company.RecruiterID, &company.CreatedAt, &company.UpdatedAt); err != nil {
+			log.Printf("GetCompanies: scan error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan company"})
 			return
 		}
 		companies = append(companies, company)
 	}
 
+	log.Printf("GetCompanies: returning %d companies for recruiter %s", len(companies), recruiterID)
 	c.JSON(http.StatusOK, gin.H{"companies": companies})
 }
