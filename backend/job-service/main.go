@@ -51,6 +51,12 @@ func main() {
 		publicJobs.GET("/company/:companyId", handlers.GetJobsByCompany)
 	}
 
+	// Public company routes
+	publicCompanies := router.Group("/api/companies")
+	{
+		publicCompanies.GET("/:id", handlers.GetCompany)
+	}
+
 	// Protected routes (require authentication)
 	auth := router.Group("/api")
 	auth.Use(middleware.AuthMiddleware())
@@ -62,7 +68,6 @@ func main() {
 			companies.POST("", middleware.RecruiterOnly(), handlers.CreateCompany)
 			companies.PUT("/:id", middleware.RecruiterOnly(), handlers.UpdateCompany)
 			companies.DELETE("/:id", middleware.RecruiterOnly(), handlers.DeleteCompany)
-			companies.GET("/:id", handlers.GetCompany)
 		}
 
 		// Job management (recruiters only for create/update/delete)

@@ -22,15 +22,18 @@ func CreateCompany(c *gin.Context) {
 
 	var company models.Company
 	query := `
-		INSERT INTO companies (name, description, website, logo_url, recruiter_id)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, name, description, website, logo_url, recruiter_id, created_at, updated_at
+		INSERT INTO companies (name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
 	`
-	err := config.DB.QueryRow(query, req.Name, req.Description, req.Website, req.LogoURL, recruiterID).
+	err := config.DB.QueryRow(query, req.Name, req.Description, req.Website, req.LogoURL, recruiterID,
+		req.Industry, req.CompanySize, req.FoundedYear, req.Headquarters).
 		Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
-			&company.RecruiterID, &company.CreatedAt, &company.UpdatedAt)
+			&company.RecruiterID, &company.Industry, &company.CompanySize, &company.FoundedYear, &company.Headquarters,
+			&company.Rating, &company.CreatedAt, &company.UpdatedAt)
 
 	if err != nil {
+		log.Printf("Failed to create company: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create company"})
 		return
 	}
@@ -71,17 +74,25 @@ func UpdateCompany(c *gin.Context) {
 		    description = COALESCE(NULLIF($2, ''), description),
 		    website = COALESCE(NULLIF($3, ''), website),
 		    logo_url = COALESCE(NULLIF($4, ''), logo_url),
+		    industry = COALESCE(NULLIF($5, ''), industry),
+		    company_size = COALESCE(NULLIF($6, ''), company_size),
+		    founded_year = COALESCE(NULLIF($7, 0), founded_year),
+		    headquarters = COALESCE(NULLIF($8, ''), headquarters),
 		    updated_at = CURRENT_TIMESTAMP
-		WHERE id = $5
-		RETURNING id, name, description, website, logo_url, recruiter_id, created_at, updated_at
+		WHERE id = $9
+		RETURNING id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
 	`
 
 	var company models.Company
-	err = config.DB.QueryRow(query, req.Name, req.Description, req.Website, req.LogoURL, companyID).
+	err = config.DB.QueryRow(query, req.Name, req.Description, req.Website, req.LogoURL,
+		req.Industry, req.CompanySize, req.FoundedYear, req.Headquarters,
+		companyID).
 		Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
-			&company.RecruiterID, &company.CreatedAt, &company.UpdatedAt)
+			&company.RecruiterID, &company.Industry, &company.CompanySize, &company.FoundedYear, &company.Headquarters,
+			&company.Rating, &company.CreatedAt, &company.UpdatedAt)
 
 	if err != nil {
+		log.Printf("Failed to update company: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update company"})
 		return
 	}
@@ -131,12 +142,13 @@ func GetCompany(c *gin.Context) {
 
 	var company models.Company
 	query := `
-		SELECT id, name, description, website, logo_url, recruiter_id, created_at, updated_at
+		SELECT id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
 		FROM companies WHERE id = $1
 	`
 	err := config.DB.QueryRow(query, companyID).
 		Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
-			&company.RecruiterID, &company.CreatedAt, &company.UpdatedAt)
+			&company.RecruiterID, &company.Industry, &company.CompanySize, &company.FoundedYear, &company.Headquarters,
+			&company.Rating, &company.CreatedAt, &company.UpdatedAt)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Company not found"})
@@ -164,7 +176,7 @@ func GetCompanies(c *gin.Context) {
 	}
 
 	query := `
-		SELECT id, name, description, website, logo_url, recruiter_id, created_at, updated_at
+		SELECT id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
 		FROM companies
 		WHERE recruiter_id = $1
 		ORDER BY created_at DESC
@@ -181,7 +193,8 @@ func GetCompanies(c *gin.Context) {
 	for rows.Next() {
 		var company models.Company
 		if err := rows.Scan(&company.ID, &company.Name, &company.Description, &company.Website, &company.LogoURL,
-			&company.RecruiterID, &company.CreatedAt, &company.UpdatedAt); err != nil {
+			&company.RecruiterID, &company.Industry, &company.CompanySize, &company.FoundedYear, &company.Headquarters,
+			&company.Rating, &company.CreatedAt, &company.UpdatedAt); err != nil {
 			log.Printf("GetCompanies: scan error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan company"})
 			return

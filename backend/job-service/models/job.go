@@ -6,28 +6,41 @@ import (
 
 // Company represents a company profile
 type Company struct {
-	ID          string    `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Description string    `json:"description,omitempty" db:"description"`
-	Website     string    `json:"website,omitempty" db:"website"`
-	LogoURL     string    `json:"logo_url,omitempty" db:"logo_url"`
-	RecruiterID string    `json:"recruiter_id" db:"recruiter_id"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID           string    `json:"id" db:"id"`
+	Name         string    `json:"name" db:"name"`
+	Description  string    `json:"description,omitempty" db:"description"`
+	Website      string    `json:"website,omitempty" db:"website"`
+	LogoURL      string    `json:"logo_url,omitempty" db:"logo_url"`
+	RecruiterID  string    `json:"recruiter_id" db:"recruiter_id"`
+	Industry     string    `json:"industry,omitempty" db:"industry"`
+	CompanySize  string    `json:"company_size,omitempty" db:"company_size"`
+	FoundedYear  int       `json:"founded_year,omitempty" db:"founded_year"`
+	Headquarters string    `json:"headquarters,omitempty" db:"headquarters"`
+	Rating       float64   `json:"rating,omitempty" db:"rating"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type CreateCompanyRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	Website     string `json:"website"`
-	LogoURL     string `json:"logo_url"`
+	Name         string `json:"name" binding:"required"`
+	Description  string `json:"description"`
+	Website      string `json:"website"`
+	LogoURL      string `json:"logo_url"`
+	Industry     string `json:"industry"`
+	CompanySize  string `json:"company_size"`
+	FoundedYear  int    `json:"founded_year"`
+	Headquarters string `json:"headquarters"`
 }
 
 type UpdateCompanyRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Website     string `json:"website"`
-	LogoURL     string `json:"logo_url"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Website      string `json:"website"`
+	LogoURL      string `json:"logo_url"`
+	Industry     string `json:"industry"`
+	CompanySize  string `json:"company_size"`
+	FoundedYear  int    `json:"founded_year"`
+	Headquarters string `json:"headquarters"`
 }
 
 // Job represents a job posting
