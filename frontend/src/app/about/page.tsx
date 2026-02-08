@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#030711] text-gray-900 dark:text-white overflow-hidden selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white overflow-hidden selection:bg-indigo-500/30">
       
       {/* 1. HERO SECTION: "The Neural Network" */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-20">

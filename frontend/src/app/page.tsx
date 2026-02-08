@@ -8,7 +8,7 @@ import { Footer } from "@/components/landing/Footer";
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white dark:bg-[#030711] text-gray-900 dark:text-white selection:bg-indigo-500/30">
+    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white selection:bg-indigo-500/30">
       <main className="flex-1">
         <HeroAI />
         <SocialProof />

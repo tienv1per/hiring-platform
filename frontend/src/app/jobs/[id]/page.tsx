@@ -90,7 +90,7 @@ export default function JobDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-white dark:bg-[#030711]">
+      <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
@@ -106,7 +106,7 @@ export default function JobDetailsPage() {
 
   if (!job) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center gap-4 bg-white dark:bg-[#030711]">
+      <div className="min-h-screen flex flex-col justify-center items-center gap-4 bg-gray-50 dark:bg-gray-900">
         <Zap className="w-12 h-12 text-gray-400" />
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Job Not Found</h2>
         <Button onClick={() => router.push("/jobs")} className="bg-indigo-600 hover:bg-indigo-500 text-white">Back to Jobs</Button>
@@ -117,7 +117,7 @@ export default function JobDetailsPage() {
   const matchScore = job.similarity ? Math.round(job.similarity * 100) : 94; // Mock score for demo
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#030711] text-gray-900 dark:text-white pb-16">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white pb-16">
       
       {/* HERO HEADER */}
       <section className="relative overflow-hidden border-b border-gray-200 dark:border-white/10">

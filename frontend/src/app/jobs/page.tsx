@@ -84,7 +84,7 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#030711] text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       
       {/* HERO SECTION */}
       <section className="relative pt-28 pb-12 overflow-hidden">

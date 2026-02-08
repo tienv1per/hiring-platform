@@ -212,7 +212,7 @@ export default function ProfilePage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-white dark:bg-[#030711]">
+      <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
@@ -229,7 +229,7 @@ export default function ProfilePage() {
   if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#030711] text-gray-900 dark:text-white pb-16">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white pb-16">
       
       {/* Hero Header */}
       <section className="relative overflow-hidden border-b border-gray-200 dark:border-white/10">

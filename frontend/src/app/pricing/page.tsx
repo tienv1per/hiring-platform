@@ -88,7 +88,7 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#030711] text-gray-900 dark:text-white overflow-hidden selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white overflow-hidden selection:bg-indigo-500/30">
       
       {/* HERO */}
       <section className="relative pt-32 pb-20 overflow-hidden">
