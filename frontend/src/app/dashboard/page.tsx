@@ -66,124 +66,296 @@ export default function DashboardPage() {
     visible: { y: 0, opacity: 1 }
   };
 
-  // Recruiter Dashboard (Unchanged for now, focusing on Job Seeker per request)
+  // Recruiter Dashboard - AI-POWERED DESIGN
   if (userRole === "recruiter") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#030711]">
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+        {/* Background Gradients */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-indigo-300/20 dark:bg-indigo-600/10 rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-300/20 dark:bg-purple-600/10 rounded-full blur-[150px] translate-x-1/2 translate-y-1/2" />
+        </div>
+
+        {/* Header Section */}
+        <section className="relative z-10 pt-28 pb-6">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+            >
               <div>
-                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium mb-1">
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Recruiter Dashboard</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                    <LayoutDashboard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 border-0">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    AI-Powered
+                  </Badge>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  Welcome back, Recruiter!
+                <h1 className="text-3xl font-bold mb-1">
+                  Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
                 </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                  Here's what's happening with your job postings today.
+                <p className="text-gray-600 dark:text-gray-400">
+                  Here&apos;s your AI-powered recruitment overview
                 </p>
               </div>
               <div className="flex gap-3">
+                <Link href="/report">
+                  <Button variant="outline" className="rounded-xl border-gray-200 dark:border-gray-700">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    View Analytics
+                  </Button>
+                </Link>
                 <Link href="/recruiter/jobs/new">
-                  <Button className="gap-2 shadow-lg shadow-blue-500/20">
-                    <Plus className="h-4 w-4" /> Post New Job
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Post New Job
                   </Button>
                 </Link>
               </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Metrics Grid */}
+        <section className="relative z-10 pb-8">
+          <div className="container mx-auto px-4">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+            >
+              {[
+                { label: "Active Jobs", value: "12", change: "+2", icon: Briefcase, color: "indigo" },
+                { label: "Total Applications", value: "48", change: "+15", icon: FileText, color: "purple" },
+                { label: "AI Matches", value: "36", change: "+8", icon: Sparkles, color: "cyan" },
+                { label: "Interviews", value: "5", change: "+3", icon: Users, color: "emerald" },
+              ].map((stat, i) => (
+                <motion.div key={i} variants={itemVariants}>
+                  <Card className="bg-white dark:bg-gray-800/90 border-gray-200 dark:border-gray-700/50 rounded-2xl hover:shadow-lg hover:shadow-indigo-500/5 transition-all">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          stat.color === "indigo" ? "bg-indigo-100 dark:bg-indigo-500/20" :
+                          stat.color === "purple" ? "bg-purple-100 dark:bg-purple-500/20" :
+                          stat.color === "cyan" ? "bg-cyan-100 dark:bg-cyan-500/20" :
+                          "bg-emerald-100 dark:bg-emerald-500/20"
+                        }`}>
+                          <stat.icon className={`w-5 h-5 ${
+                            stat.color === "indigo" ? "text-indigo-600 dark:text-indigo-400" :
+                            stat.color === "purple" ? "text-purple-600 dark:text-purple-400" :
+                            stat.color === "cyan" ? "text-cyan-600 dark:text-cyan-400" :
+                            "text-emerald-600 dark:text-emerald-400"
+                          }`} />
+                        </div>
+                        <Badge className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
+                          {stat.change} this week
+                        </Badge>
+                      </div>
+                      <div className="text-2xl font-bold mb-1">{stat.value}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Main Content Grid */}
+        <section className="relative z-10 pb-20">
+          <div className="container mx-auto px-4">
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Left Column - Quick Actions & AI Insights */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* AI Insights Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Card className="bg-gradient-to-br from-indigo-600 via-purple-600 to-cyan-600 border-0 rounded-3xl overflow-hidden relative">
+                    <div className="absolute inset-0 bg-black/10" />
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48" />
+                    <CardContent className="p-8 relative z-10 text-white">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg">AI Recruitment Insights</h3>
+                          <p className="text-white/70 text-sm">Powered by HireAI</p>
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4 mt-6">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <p className="text-white/70 text-sm mb-1">Top Skill in Demand</p>
+                          <p className="font-bold text-lg">React.js</p>
+                          <p className="text-xs text-white/50 mt-1">78% of applicants</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <p className="text-white/70 text-sm mb-1">Avg. Match Score</p>
+                          <p className="font-bold text-lg">82.4%</p>
+                          <p className="text-xs text-emerald-300 mt-1">↑ 5% from last month</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <p className="text-white/70 text-sm mb-1">Time to Hire</p>
+                          <p className="font-bold text-lg">12.3 days</p>
+                          <p className="text-xs text-emerald-300 mt-1">↓ 22% faster</p>
+                        </div>
+                      </div>
+                      <div className="mt-6 flex gap-3">
+                        <Link href="/report">
+                          <Button className="bg-white text-indigo-600 hover:bg-white/90 rounded-xl">
+                            View Full Report
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Quick Actions */}
+                <div>
+                  <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-amber-500" />
+                    Quick Actions
+                  </h2>
+                  <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid md:grid-cols-3 gap-4"
+                  >
+                    {[
+                      { 
+                        title: "Post a Job", 
+                        desc: "Create AI-optimized job posting", 
+                        icon: Plus, 
+                        href: "/recruiter/jobs/new",
+                        gradient: "from-indigo-500 to-purple-500"
+                      },
+                      { 
+                        title: "Review Applications", 
+                        desc: "AI-ranked candidates waiting", 
+                        icon: FileText, 
+                        href: "/recruiter/applications",
+                        gradient: "from-purple-500 to-pink-500"
+                      },
+                      { 
+                        title: "Company Profile", 
+                        desc: "Manage branding & details", 
+                        icon: Building2, 
+                        href: "/recruiter/companies",
+                        gradient: "from-cyan-500 to-blue-500"
+                      }
+                    ].map((action, i) => (
+                      <motion.div key={i} variants={itemVariants}>
+                        <Link href={action.href} className="block h-full">
+                          <Card className="h-full bg-white dark:bg-gray-800/90 border-gray-200 dark:border-gray-700/50 rounded-2xl hover:shadow-lg hover:shadow-indigo-500/10 transition-all group cursor-pointer overflow-hidden">
+                            <CardContent className="p-5">
+                              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                                <action.icon className="w-6 h-6 text-white" />
+                              </div>
+                              <h3 className="font-bold mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{action.title}</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{action.desc}</p>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Right Column - Activity & AI Tips */}
+              <div className="space-y-6">
+                {/* Recent Activity */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  <Card className="bg-white dark:bg-gray-800/90 border-gray-200 dark:border-gray-700/50 rounded-2xl">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        Recent Activity
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <div className="space-y-4">
+                        {[
+                          { action: "New application", detail: "Senior React Developer", time: "2 min ago", type: "application" },
+                          { action: "AI Match found", detail: "85% match for Full Stack role", time: "15 min ago", type: "match" },
+                          { action: "Interview scheduled", detail: "Jane D. - Tomorrow 2PM", time: "1 hour ago", type: "interview" },
+                          { action: "Job view spike", detail: "+45% views on ML Engineer", time: "3 hours ago", type: "view" },
+                        ].map((item, i) => (
+                          <div key={i} className="flex gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              item.type === "application" ? "bg-indigo-100 dark:bg-indigo-500/20" :
+                              item.type === "match" ? "bg-purple-100 dark:bg-purple-500/20" :
+                              item.type === "interview" ? "bg-emerald-100 dark:bg-emerald-500/20" :
+                              "bg-amber-100 dark:bg-amber-500/20"
+                            }`}>
+                              {item.type === "application" && <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+                              {item.type === "match" && <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />}
+                              {item.type === "interview" && <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                              {item.type === "view" && <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.action}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.detail}</p>
+                            </div>
+                            <span className="text-xs text-gray-400 shrink-0">{item.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <Link href="/recruiter/applications">
+                        <Button variant="ghost" className="w-full mt-4 text-indigo-600 dark:text-indigo-400">
+                          View All Activity
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* AI Tips */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-500/10 dark:to-purple-500/10 border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                          <Zap className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-indigo-900 dark:text-indigo-300">AI Recommendation</h3>
+                          <p className="text-xs text-indigo-600 dark:text-indigo-400">Based on your hiring patterns</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-indigo-800 dark:text-indigo-300/80 leading-relaxed">
+                        Your &quot;Full Stack Developer&quot; job has received high-quality applications. 
+                        Consider scheduling interviews this week to secure top candidates before competitors.
+                      </p>
+                      <Button className="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl">
+                        Review Top Candidates
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="container mx-auto px-4 py-8 space-y-8">
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-          >
-            {[
-              { label: "Active Jobs", value: "12", icon: Briefcase, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
-              { label: "Total Applications", value: "48", icon: FileText, color: "text-purple-600 bg-purple-50 dark:bg-purple-900/20" },
-              { label: "Interviews Scheduled", value: "5", icon: Users, color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20" },
-              { label: "Company Views", value: "1.2k", icon: TrendingUp, color: "text-green-600 bg-green-50 dark:bg-green-900/20" },
-            ].map((stat, i) => (
-              <motion.div key={i} variants={itemVariants}>
-                <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.label}</p>
-                      <h3 className="text-2xl font-bold mt-1 text-gray-900 dark:text-gray-100">{stat.value}</h3>
-                    </div>
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-                      <stat.icon className="h-6 w-6" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-500" />
-            Quick Actions
-          </h2>
-          
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid gap-6 md:grid-cols-3"
-          >
-            {[
-              { 
-                title: "Post a Job", 
-                desc: "Create a new job opportunity to find expected candidates.", 
-                icon: Plus, 
-                href: "/recruiter/jobs/new",
-                cta: "Create Job",
-                variant: "default" as const
-              },
-              { 
-                title: "My Companies", 
-                desc: "Manage your company profile, branding, and details.", 
-                icon: Building2, 
-                href: "/recruiter/companies",
-                cta: "Manage Profile",
-                variant: "outline" as const
-              },
-              { 
-                title: "Review Applications", 
-                desc: "View and manage candidate applications for your active jobs.", 
-                icon: FileText, 
-                href: "/recruiter/applications",
-                cta: "View Applications",
-                variant: "outline" as const
-              }
-            ].map((action, i) => (
-              <motion.div key={i} variants={itemVariants}>
-                <Link href={action.href} className="block h-full">
-                  <Card className="h-full hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader>
-                      <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
-                        <action.icon className="h-6 w-6 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 transition-colors" />
-                      </div>
-                      <CardTitle className="group-hover:text-blue-600 transition-colors">{action.title}</CardTitle>
-                      <CardDescription className="text-sm line-clamp-2">{action.desc}</CardDescription>
-                    </CardHeader>
-                    <CardFooter>
-                      <Button variant={action.variant} className="w-full group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all">
-                        {action.cta}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+        </section>
       </div>
     );
   }
