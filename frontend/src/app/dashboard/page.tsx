@@ -38,7 +38,7 @@ export default function DashboardPage() {
               console.error("Failed to load recommended jobs");
           }
       }
-      if (userRole === "job_seeker") fetchJobs();
+      if (userRole === "jobseeker") fetchJobs();
   }, [userRole]);
 
   if (isLoading) {

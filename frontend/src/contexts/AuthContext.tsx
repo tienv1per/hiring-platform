@@ -6,6 +6,10 @@ import { useSession } from "next-auth/react";
 interface AuthContextType {
   userId: string | null;
   userRole: "jobseeker" | "recruiter" | null;
+  user: {
+    name?: string | null;
+    email?: string | null;
+  } | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -13,6 +17,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   userId: null,
   userRole: null,
+  user: null,
   isAuthenticated: false,
   isLoading: true,
 });
@@ -30,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authData, setAuthData] = useState<AuthContextType>({
     userId: null,
     userRole: null,
+    user: null,
     isAuthenticated: false,
     isLoading: true,
   });
@@ -41,6 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthData({
         userId: session.user.id,
         userRole: session.user.role,
+        user: {
+          name: session.user.name,
+          email: session.user.email,
+        },
         isAuthenticated: true,
         isLoading: false,
       });
@@ -48,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthData({
         userId: null,
         userRole: null,
+        user: null,
         isAuthenticated: false,
         isLoading: false,
       });
