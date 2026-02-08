@@ -213,25 +213,23 @@ export default function ProfilePage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex justify-center items-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!profile) {
-    return null;
-  }
+  if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-muted/30 py-8">
+      <div className="container max-w-6xl mx-auto px-4">
+        {/* Page Header */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold mb-2">My Profile</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage your personal information and skills
+            <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your personal information, skills, and resume
             </p>
           </div>
           {!isEditing && (
@@ -241,276 +239,298 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Profile Information Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Your basic details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isEditing ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column - User Card & Stats */}
+          <div className="lg:col-span-4 space-y-6">
+            <Card className="overflow-hidden">
+              <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+              <CardContent className="pt-0 relative">
+                <div className="flex justify-center -mt-16 mb-4">
+                  <div className="relative group">
+                    <div className="w-32 h-32 rounded-full border-4 border-background bg-muted flex items-center justify-center overflow-hidden">
+                      {profile.profile_picture_url ? (
+                        <img
+                          src={profile.profile_picture_url}
+                          alt={profile.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-4xl font-bold text-muted-foreground">
+                          {profile.name?.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    {isEditing && (
+                      <label htmlFor="photo-upload-overlay" className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
+                        <Upload className="h-6 w-6" />
+                        <input
+                          id="photo-upload-overlay"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload("profile-pic", file);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email (Read-only)</Label>
-                  <Input id="email" value={profile.email} disabled />
+
+                <div className="text-center space-y-1 mb-6">
+                  <h2 className="text-2xl font-bold">{profile.name}</h2>
+                  <p className="text-muted-foreground">{profile.email}</p>
+                  {profile.phone && <p className="text-sm text-muted-foreground">{profile.phone}</p>}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+1 (555) 123-4567"
-                  />
+
+                <div className="grid grid-cols-2 gap-4 text-center border-t pt-4">
+                  <div>
+                    <div className="text-2xl font-bold">{profile.skills?.length || 0}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Skills</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{profile.resume_url ? "1" : "0"}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Resume</div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows={4}
-                    placeholder="Tell us about yourself..."
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}
-                  </Button>
-                  <Button variant="outline" onClick={() => {
-                    setIsEditing(false);
-                    setFormData({
-                      name: profile.name || "",
-                      phone: profile.phone || "",
-                      bio: profile.bio || "",
-                    });
-                  }}>
-                    Cancel
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">Name</p>
-                  <p className="font-medium">{profile.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">Email</Label>
                   <p className="font-medium">{profile.email}</p>
                 </div>
-                {profile.phone && (
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{profile.phone}</p>
-                  </div>
-                )}
-                {profile.bio && (
-                  <div>
-                    <p className="text-sm text-gray-500">Bio</p>
-                    <p className="font-medium whitespace-pre-wrap">{profile.bio}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Skills Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Skills</CardTitle>
-            <CardDescription>Add skills to showcase your expertise</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Staged Skills - Show skills ready to be added */}
-            {pendingSkills.length > 0 && (
-              <div className="mb-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  Ready to add ({pendingSkills.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {pendingSkills.map((skill, index) => {
-                    const colorClasses = getSkillColorClasses(skill.color);
-                    return (
-                      <div
-                        key={`pending-${index}`}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}
-                      >
-                        {skill.name}
-                        <button
-                          onClick={() => handleRemovePendingSkill(skill.name)}
-                          className="hover:opacity-70 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">Phone</Label>
+                  <p className="font-medium">{profile.phone || "Not provided"}</p>
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Add Skill */}
-            <div className="relative mb-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter a skill (e.g., JavaScript, React, Python)"
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSkill();
-                    }
-                  }}
-                  onFocus={() => newSkill.trim().length >= 2 && setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                />
-                <Button 
-                  onClick={() => handleAddSkill()}
-                  disabled={pendingSkills.length === 0 && !newSkill.trim()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add {pendingSkills.length > 0 && `(${pendingSkills.length})`}
-                </Button>
-              </div>
-
-              {/* Autocomplete Suggestions */}
-              {showSuggestions && skillSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-                  {skillSuggestions.map((suggestion) => {
-                    const colorClasses = getSkillColorClasses(suggestion.color);
-                    return (
-                      <div
-                        key={suggestion.id}
-                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2"
-                        onClick={() => handleSelectSkill(suggestion.name, suggestion.color)}
-                      >
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${colorClasses.bg} ${colorClasses.text}`}>
-                          {suggestion.name}
-                        </span>
+          {/* Right Column - Tabs/Content */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* About / Edit Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>About Me</CardTitle>
+                <CardDescription>Tell recruiters who you are</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Skills List - Colored Badges */}
-            {profile.skills && profile.skills.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => {
-                  const colorClasses = getSkillColorClasses(skill.skill_color);
-                  return (
-                    <div
-                      key={skill.skill_id}
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}
-                    >
-                      {skill.skill_name}
-                      <button
-                        onClick={() => handleRemoveSkill(skill.skill_id)}
-                        className="hover:opacity-70 transition-opacity"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        />
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">No skills added yet</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Files Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Files</CardTitle>
-            <CardDescription>Upload your resume and profile picture</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Resume */}
-            <div>
-              <Label>Resume</Label>
-              <div className="flex items-center gap-3 mt-2">
-                {profile.resume_url ? (
-                  <a
-                    href={profile.resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    View Current Resume
-                  </a>
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        value={formData.bio}
+                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                        rows={4}
+                        placeholder="Tell us about your experience and goals..."
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                      <Button onClick={handleSave} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No resume uploaded</p>
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {profile.bio || "No bio provided yet. Click 'Edit Profile' to add one."}
+                  </p>
                 )}
-                <label htmlFor="resume-upload">
-                  <Button asChild>
-                    <span className="cursor-pointer">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Resume
-                    </span>
-                  </Button>
-                  <input
-                    id="resume-upload"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileUpload("resume", file);
-                    }}
-                  />
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX (max 5MB)</p>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Profile Picture */}
-            <div>
-              <Label>Profile Picture</Label>
-              <div className="flex items-center gap-3 mt-2">
-                {profile.profile_picture_url && (
-                  <img
-                    src={profile.profile_picture_url}
-                    alt="Profile"
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                )}
-                <label htmlFor="photo-upload">
-                  <Button variant="outline" asChild>
-                    <span className="cursor-pointer">
-                      <Upload className="h-4 w-4 mr-2" />
-                      {profile.profile_picture_url ? "Change Photo" : "Upload Photo"}
-                    </span>
-                  </Button>
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileUpload("profile-pic", file);
-                    }}
-                  />
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP (max 2MB)</p>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Skills Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Skills & Expertise</CardTitle>
+                  <CardDescription>Showcase your technical abilities</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Skill Input Area */}
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                    <div className="relative">
+                      <div className="flex gap-2">
+                         <div className="relative flex-1">
+                          <Input
+                            placeholder="Add a new skill (e.g. React, Python)..."
+                            value={newSkill}
+                            onChange={(e) => setNewSkill(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
+                            className="bg-background"
+                          />
+                          {showSuggestions && skillSuggestions.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-popover text-popover-foreground border rounded-md shadow-lg max-h-60 overflow-auto">
+                              {skillSuggestions.map((suggestion) => (
+                                <div
+                                  key={suggestion.id}
+                                  className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center gap-2 text-sm"
+                                  onClick={() => handleSelectSkill(suggestion.name, suggestion.color)}
+                                >
+                                  {suggestion.name}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <Button onClick={handleAddSkill} disabled={!newSkill.trim() && pendingSkills.length === 0}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Pending Skills */}
+                    {pendingSkills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {pendingSkills.map((skill, index) => {
+                           const colorClasses = getSkillColorClasses(skill.color);
+                           return (
+                             <Badge key={`pending-${index}`} variant="secondary" className={`${colorClasses.bg} ${colorClasses.text} border-dashed border border-current opacity-70`}>
+                               {skill.name}
+                               <button onClick={() => handleRemovePendingSkill(skill.name)} className="ml-1 hover:text-destructive">
+                                 <X className="h-3 w-3" />
+                               </button>
+                             </Badge>
+                           );
+                        })}
+                        <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={handleAddSkill}>Save All</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skills List */}
+                  {profile.skills && profile.skills.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {profile.skills.map((skill) => {
+                        const colorClasses = getSkillColorClasses(skill.skill_color);
+                        return (
+                          <div
+                            key={skill.skill_id}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-all hover:scale-105 ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}`}
+                          >
+                            {skill.skill_name}
+                            <button
+                              onClick={() => handleRemoveSkill(skill.skill_id)}
+                              className="hover:opacity-70 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+                      No skills added yet. Start typing to add some!
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Resume Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Resume</CardTitle>
+                <CardDescription>Upload your CV to apply for jobs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+                  {profile.resume_url ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">Resume Uploaded</h3>
+                        <p className="text-sm text-muted-foreground mb-4">You're ready to apply!</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button variant="outline" asChild>
+                            <a href={profile.resume_url} target="_blank" rel="noopener noreferrer">View Resume</a>
+                          </Button>
+                          <label htmlFor="resume-reupload">
+                            <Button variant="default" asChild>
+                              <span className="cursor-pointer">Update</span>
+                            </Button>
+                            <input
+                              id="resume-reupload"
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload("resume", file);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-full flex items-center justify-center mx-auto">
+                        <Upload className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">Upload Resume</h3>
+                        <p className="text-sm text-muted-foreground mb-4">PDF, DOC, DOCX (Max 5MB)</p>
+                        <label htmlFor="resume-upload-new">
+                          <Button asChild>
+                            <span className="cursor-pointer">Select File</span>
+                          </Button>
+                          <input
+                            id="resume-upload-new"
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload("resume", file);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
