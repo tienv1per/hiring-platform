@@ -27,6 +27,13 @@ func main() {
 	// CORS middleware
 	router.Use(middleware.CORSMiddleware())
 
+	// Prometheus metrics middleware
+	router.Use(middleware.PrometheusMiddleware())
+
+	// Start metrics server on separate port
+	middleware.StartMetricsServer("9102")
+	log.Println("📊 Metrics server started on port 9102")
+
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "service": "user-service"})

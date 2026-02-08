@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Auth Service
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['host.docker.internal:9101']
+    metrics_path: /metrics
+
+  # User Service
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['host.docker.internal:9102']
+    metrics_path: /metrics
+
+  # Job Service
+  - job_name: 'job-service'
+    static_configs:
+      - targets: ['host.docker.internal:9103']
+    metrics_path: /metrics
+
+  # Utility Service
+  - job_name: 'utility-service'
+    static_configs:
+      - targets: ['host.docker.internal:9104']
+    metrics_path: /metrics
+
+  # Embedding Service (Python)
+  - job_name: 'embedding-service'
+    static_configs:
+      - targets: ['host.docker.internal:9105']
+    metrics_path: /metrics

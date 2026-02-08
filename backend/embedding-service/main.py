@@ -8,9 +8,32 @@ from transformers import AutoTokenizer
 import onnxruntime as ort
 import numpy as np
 import os
+import threading
+from prometheus_flask_exporter import PrometheusMetrics
 from models import EmbedRequest, BatchEmbedRequest, EmbedResponse, BatchEmbedResponse
 
 app = Flask(__name__)
+
+# Setup Prometheus metrics
+metrics = PrometheusMetrics(app, path=None)  # Disable default /metrics endpoint
+
+# Start metrics server on separate port
+def start_metrics_server():
+    from flask import Flask
+    from prometheus_client import make_wsgi_app
+    from wsgiref.simple_server import make_server
+    
+    metrics_app = Flask('metrics')
+    @metrics_app.route('/metrics')
+    def metrics_endpoint():
+        from prometheus_client import generate_latest
+        return generate_latest()
+    
+    print("📊 Metrics server started on port 9105")
+    server = make_server('0.0.0.0', 9105, metrics_app)
+    server.serve_forever()
+
+threading.Thread(target=start_metrics_server, daemon=True).start()
 
 # Model configuration
 MODEL_PATH = "models/all-MiniLM-L6-v2.onnx"
