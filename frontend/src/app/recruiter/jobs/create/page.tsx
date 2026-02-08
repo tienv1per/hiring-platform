@@ -40,6 +40,7 @@ export default function CreateJobPage() {
     job_type: "full-time",
     work_location: "onsite",
     salary: "",
+    openings: 1,
     description: "# Job Description\n\n## Responsibilities\n\n- \n\n## Requirements\n\n- \n\n## Benefits\n\n- \n",
     required_skills: "",
   });
@@ -216,15 +217,29 @@ export default function CreateJobPage() {
                 </div>
               </div>
 
-              {/* Salary */}
-              <div className="space-y-2">
-                <Label htmlFor="salary">Salary Range</Label>
-                <Input
-                  id="salary"
-                  value={formData.salary}
-                  onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                  placeholder="e.g. $100,000 - $150,000"
-                />
+              {/* Salary & Openings */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="salary">Salary Range</Label>
+                  <Input
+                    id="salary"
+                    value={formData.salary}
+                    onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    placeholder="e.g. $100,000 - $150,000"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="openings">Number of Openings *</Label>
+                  <Input
+                    id="openings"
+                    type="number"
+                    min={1}
+                    value={formData.openings}
+                    onChange={(e) => setFormData({ ...formData, openings: parseInt(e.target.value) || 1 })}
+                    required
+                  />
+                </div>
               </div>
 
               {/* Required Skills */}
