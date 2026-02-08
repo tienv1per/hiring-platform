@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +29,14 @@ const TAG_COLORS: Record<string, string> = {
   "Trends": "bg-lime-100 text-lime-700 dark:bg-lime-500/20 dark:text-lime-300",
   "Future of Work": "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
 };
+
+// Types for TOC
+interface TocItem {
+  id: string;
+  title: string;
+  level: number;
+  children: TocItem[];
+}
 
 // Mock blog content data
 const BLOG_CONTENT: Record<string, {
@@ -506,11 +515,112 @@ By 2030, we predict:
   }
 };
 
+// Extract TOC from content
+function extractToc(content: string): TocItem[] {
+  const lines = content.split('\n');
+  const tocItems: TocItem[] = [];
+  
+  lines.forEach((line) => {
+    const h2Match = line.match(/^## (.+)$/);
+    const h3Match = line.match(/^### (.+)$/);
+    
+    if (h2Match) {
+      const title = h2Match[1].trim();
+      const id = slugify(title);
+      tocItems.push({
+        id,
+        title,
+        level: 2,
+        children: []
+      });
+    } else if (h3Match && tocItems.length > 0) {
+      const title = h3Match[1].trim();
+      const id = slugify(title);
+      tocItems[tocItems.length - 1].children.push({
+        id,
+        title,
+        level: 3,
+        children: []
+      });
+    }
+  });
+  
+  return tocItems;
+}
+
+// Create URL-friendly slug
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+}
+
+// Get all heading IDs in order for scroll tracking
+function getAllHeadingIds(toc: TocItem[]): string[] {
+  const ids: string[] = [];
+  toc.forEach(item => {
+    ids.push(item.id);
+    item.children.forEach(child => {
+      ids.push(child.id);
+    });
+  });
+  return ids;
+}
+
 export default function BlogDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
+  const [activeId, setActiveId] = useState<string>("");
   
   const article = BLOG_CONTENT[slug];
+  const toc = article ? extractToc(article.content) : [];
+  const headingIds = getAllHeadingIds(toc);
+
+  // Track scroll position to highlight active TOC item
+  useEffect(() => {
+    if (!article) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      {
+        rootMargin: '-80px 0px -70% 0px',
+        threshold: 0
+      }
+    );
+
+    // Observe all headings
+    headingIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      headingIds.forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          observer.unobserve(element);
+        }
+      });
+    };
+  }, [article, headingIds]);
+
+  // Scroll to section
+  function scrollToSection(id: string) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
   
   if (!article) {
     return (
@@ -529,6 +639,12 @@ export default function BlogDetailPage() {
       </div>
     );
   }
+
+  // Check if an ID is active (either direct match or parent of active child)
+  const isActive = (id: string): boolean => activeId === id;
+  const isParentActive = (item: TocItem): boolean => {
+    return item.children.some(child => child.id === activeId);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white relative">
@@ -560,126 +676,177 @@ export default function BlogDetailPage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content with Sidebar TOC */}
       <section className="relative z-10 pb-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Article Card with Glow */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative"
-            >
-              {/* Glow Effect Behind Card */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 rounded-[2rem] blur-2xl opacity-50" />
-              
-              <Card className="relative bg-white dark:bg-gray-800/90 border-gray-200 dark:border-gray-700/50 rounded-3xl overflow-hidden backdrop-blur-sm shadow-xl">
-                <CardContent className="p-8 md:p-12">
-                  {/* Header */}
-                  <header className="mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {article.tags.map((tag) => (
-                        <Badge 
-                          key={tag} 
-                          className={`text-xs font-medium border-0 ${TAG_COLORS[tag] || "bg-gray-100 text-gray-700"}`}
+          <div className="flex gap-8 max-w-7xl mx-auto">
+            {/* Article Content */}
+            <div className="flex-1 max-w-4xl">
+              {/* Article Card with Glow */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative"
+              >
+                {/* Glow Effect Behind Card */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 rounded-[2rem] blur-2xl opacity-50" />
+                
+                <Card className="relative bg-white dark:bg-gray-800/90 border-gray-200 dark:border-gray-700/50 rounded-3xl overflow-hidden backdrop-blur-sm shadow-xl">
+                  <CardContent className="p-8 md:p-12">
+                    {/* Header */}
+                    <header className="mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {article.tags.map((tag) => (
+                          <Badge 
+                            key={tag} 
+                            className={`text-xs font-medium border-0 ${TAG_COLORS[tag] || "bg-gray-100 text-gray-700"}`}
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      
+                      {/* Title */}
+                      <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight font-serif">
+                        {article.title}
+                      </h1>
+                      
+                      {/* Excerpt */}
+                      <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                        {article.excerpt}
+                      </p>
+                      
+                      {/* Meta */}
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-medium text-gray-900 dark:text-white">{article.author}</span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {article.date}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {article.readTime}
+                        </span>
+                      </div>
+                    </header>
+                    
+                    {/* AI Insight Box */}
+                    <div className="mb-8 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-500/10 dark:to-purple-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
+                          <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-indigo-900 dark:text-indigo-300 mb-1">AI Summary</h3>
+                          <p className="text-sm text-indigo-700 dark:text-indigo-400/80">
+                            This article explores how AI technology is transforming the recruitment industry, 
+                            covering key concepts, practical applications, and future implications for both employers and job seekers.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Article Content */}
+                    <article className="prose prose-lg dark:prose-invert max-w-none
+                      prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white
+                      prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:font-serif prose-h2:scroll-mt-24
+                      prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:scroll-mt-24
+                      prose-p:text-gray-600 dark:prose-p:text-gray-400 prose-p:leading-relaxed
+                      prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:no-underline hover:prose-a:underline
+                      prose-strong:text-gray-900 dark:prose-strong:text-white
+                      prose-code:text-rose-600 dark:prose-code:text-rose-400 prose-code:bg-gray-100 dark:prose-code:bg-gray-700/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+                      prose-pre:bg-gray-900 prose-pre:rounded-xl prose-pre:shadow-lg
+                      prose-ul:text-gray-600 dark:prose-ul:text-gray-400
+                      prose-ol:text-gray-600 dark:prose-ol:text-gray-400
+                      prose-li:marker:text-indigo-500
+                      prose-table:border-collapse prose-table:w-full
+                      prose-th:bg-gray-100 dark:prose-th:bg-gray-700 prose-th:p-3 prose-th:text-left prose-th:font-semibold
+                      prose-td:border prose-td:border-gray-200 dark:prose-td:border-gray-700 prose-td:p-3
+                      prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-gray-50 dark:prose-blockquote:bg-gray-800 prose-blockquote:rounded-r-xl
+                    ">
+                      <div dangerouslySetInnerHTML={{ __html: formatContent(article.content) }} />
+                    </article>
+                    
+                    {/* Footer Actions */}
+                    <footer className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <Button variant="outline" size="sm" className="rounded-xl">
+                            <ThumbsUp className="w-4 h-4 mr-2" />
+                            Helpful
+                          </Button>
+                          <Button variant="outline" size="sm" className="rounded-xl">
+                            <Bookmark className="w-4 h-4 mr-2" />
+                            Save
+                          </Button>
+                          <Button variant="outline" size="sm" className="rounded-xl">
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Share
+                          </Button>
+                        </div>
+                        <Link href="/blog">
+                          <Button variant="ghost" className="text-indigo-600 dark:text-indigo-400">
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Blog
+                          </Button>
+                        </Link>
+                      </div>
+                    </footer>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Sticky TOC Sidebar */}
+            <aside className="hidden xl:block w-72 shrink-0">
+              <div className="sticky top-24">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <h2 className="font-bold text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+                    TABLE OF CONTENTS
+                  </h2>
+                  <nav className="space-y-1">
+                    {toc.map((item) => (
+                      <div key={item.id}>
+                        <button
+                          onClick={() => scrollToSection(item.id)}
+                          className={`block w-full text-left py-1.5 text-sm transition-colors ${
+                            isActive(item.id) || isParentActive(item)
+                              ? "text-indigo-600 dark:text-indigo-400 font-medium"
+                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                          }`}
                         >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    {/* Title */}
-                    <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight font-serif">
-                      {article.title}
-                    </h1>
-                    
-                    {/* Excerpt */}
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-                      {article.excerpt}
-                    </p>
-                    
-                    {/* Meta */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-medium text-gray-900 dark:text-white">{article.author}</span>
-                      <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {article.date}
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {article.readTime}
-                      </span>
-                    </div>
-                  </header>
-                  
-                  {/* AI Insight Box */}
-                  <div className="mb-8 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-500/10 dark:to-purple-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          {item.title}
+                        </button>
+                        {item.children.length > 0 && (
+                          <div className="ml-3 space-y-1 border-l border-gray-200 dark:border-gray-700 pl-3">
+                            {item.children.map((child) => (
+                              <button
+                                key={child.id}
+                                onClick={() => scrollToSection(child.id)}
+                                className={`block w-full text-left py-1 text-sm transition-colors ${
+                                  isActive(child.id)
+                                    ? "text-indigo-600 dark:text-indigo-400 font-medium"
+                                    : "text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                                }`}
+                              >
+                                {child.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-indigo-900 dark:text-indigo-300 mb-1">AI Summary</h3>
-                        <p className="text-sm text-indigo-700 dark:text-indigo-400/80">
-                          This article explores how AI technology is transforming the recruitment industry, 
-                          covering key concepts, practical applications, and future implications for both employers and job seekers.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Article Content */}
-                  <article className="prose prose-lg dark:prose-invert max-w-none
-                    prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white
-                    prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:font-serif
-                    prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-                    prose-p:text-gray-600 dark:prose-p:text-gray-400 prose-p:leading-relaxed
-                    prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:no-underline hover:prose-a:underline
-                    prose-strong:text-gray-900 dark:prose-strong:text-white
-                    prose-code:text-rose-600 dark:prose-code:text-rose-400 prose-code:bg-gray-100 dark:prose-code:bg-gray-700/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
-                    prose-pre:bg-gray-900 prose-pre:rounded-xl prose-pre:shadow-lg
-                    prose-ul:text-gray-600 dark:prose-ul:text-gray-400
-                    prose-ol:text-gray-600 dark:prose-ol:text-gray-400
-                    prose-li:marker:text-indigo-500
-                    prose-table:border-collapse prose-table:w-full
-                    prose-th:bg-gray-100 dark:prose-th:bg-gray-700 prose-th:p-3 prose-th:text-left prose-th:font-semibold
-                    prose-td:border prose-td:border-gray-200 dark:prose-td:border-gray-700 prose-td:p-3
-                    prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-gray-50 dark:prose-blockquote:bg-gray-800 prose-blockquote:rounded-r-xl
-                  ">
-                    <div dangerouslySetInnerHTML={{ __html: formatContent(article.content) }} />
-                  </article>
-                  
-                  {/* Footer Actions */}
-                  <footer className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" className="rounded-xl">
-                          <ThumbsUp className="w-4 h-4 mr-2" />
-                          Helpful
-                        </Button>
-                        <Button variant="outline" size="sm" className="rounded-xl">
-                          <Bookmark className="w-4 h-4 mr-2" />
-                          Save
-                        </Button>
-                        <Button variant="outline" size="sm" className="rounded-xl">
-                          <Share2 className="w-4 h-4 mr-2" />
-                          Share
-                        </Button>
-                      </div>
-                      <Link href="/blog">
-                        <Button variant="ghost" className="text-indigo-600 dark:text-indigo-400">
-                          <ArrowLeft className="w-4 h-4 mr-2" />
-                          Back to Blog
-                        </Button>
-                      </Link>
-                    </div>
-                  </footer>
-                </CardContent>
-              </Card>
-            </motion.div>
+                    ))}
+                  </nav>
+                </motion.div>
+              </div>
+            </aside>
           </div>
         </div>
       </section>
@@ -687,12 +854,18 @@ export default function BlogDetailPage() {
   );
 }
 
-// Helper function to format markdown-like content to HTML
+// Helper function to format markdown-like content to HTML with IDs for TOC
 function formatContent(content: string): string {
   return content
-    // Headers
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    // Headers with IDs for anchor navigation
+    .replace(/^## (.+)$/gim, (match, title) => {
+      const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
+      return `<h2 id="${id}">${title}</h2>`;
+    })
+    .replace(/^### (.+)$/gim, (match, title) => {
+      const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
+      return `<h3 id="${id}">${title}</h3>`;
+    })
     // Bold
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     // Inline code
