@@ -4,15 +4,19 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { jobApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
-import { Building2, MapPin, Briefcase, DollarSign, Calendar, Globe, Clock, ArrowLeft, Share2 } from "lucide-react";
+import { 
+  Building2, MapPin, Briefcase, DollarSign, Calendar, Globe, Clock, 
+  ArrowLeft, Share2, CheckCircle2, Star, Zap 
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { clsx } from "clsx";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface JobDetails {
   id: string;
@@ -25,6 +29,7 @@ interface JobDetails {
   description: string;
   required_skills: string[];
   created_at: string;
+  similarity?: number;
 }
 
 function timeAgo(dateString: string) {
@@ -52,7 +57,6 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState<JobDetails | null>(null);
   const [relatedJobs, setRelatedJobs] = useState<JobDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -62,13 +66,10 @@ export default function JobDetailsPage() {
         const response = await jobApi.get(`/api/jobs/${params.id}`);
         setJob(response.data);
 
-        // Fetch related jobs (mocking "Jobs from same company/category" by fetching recent jobs)
-        // In a real app, we'd use ?company_id=... or ?category=...
-        const relatedResponse = await jobApi.get("/api/jobs?limit=5");
-        // Filter out current job
-        setRelatedJobs(relatedResponse.data.jobs.filter((j: JobDetails) => j.id !== params.id).slice(0, 5));
+        // Fetch related jobs
+        const relatedResponse = await jobApi.get("/api/jobs?limit=4");
+        setRelatedJobs(relatedResponse.data.jobs.filter((j: JobDetails) => j.id !== params.id).slice(0, 4));
       } catch (error) {
-        console.error("Failed to fetch job:", error);
         toast.error("Failed to load job details");
       } finally {
         setIsLoading(false);
@@ -91,8 +92,10 @@ export default function JobDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-background">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+        </div>
       </div>
     );
   }
@@ -106,152 +109,110 @@ export default function JobDetailsPage() {
     );
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-muted/30 pb-12">
-      {/* Top Navigation Bar */}
-      <div className="bg-background border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/jobs")} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Jobs
-            </Button>
-            <div className="flex gap-2">
-               <Button variant="outline" size="sm" className="gap-2">
-                 <Share2 className="h-4 w-4" />
-                 Share
-               </Button>
-               {/* Mobile Apply Button */}
-               <Button size="sm" onClick={handleApply} className="md:hidden">Apply Now</Button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      {/* Immersive Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 relative overflow-hidden">
+        {/* Abstract Background Decoration */}
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50 to-transparent dark:from-blue-900/10 pointer-events-none" />
+        
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <Button variant="ghost" size="sm" onClick={() => router.push("/jobs")} className="mb-6 hover:bg-gray-100 dark:hover:bg-gray-700 -ml-2">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Jobs
+          </Button>
+          
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+            <div className="space-y-4 max-w-3xl">
+              <div className="flex items-start gap-4">
+                <div className="h-16 w-16 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                  <Building2 className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{job.title}</h1>
+                  <div className="flex items-center gap-2 text-lg text-blue-600 dark:text-blue-400 font-medium mt-1">
+                    {job.company_name}
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-base font-normal underline decoration-dashed underline-offset-4 cursor-pointer hover:text-blue-600 transition-colors">
+                      View Company Profile
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/50 px-3 py-1.5 rounded-full">
+                  <Briefcase className="h-4 w-4 text-gray-500" />
+                  <span className="capitalize">{job.job_type.replace(/-/g, " ")}</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/50 px-3 py-1.5 rounded-full">
+                  <Globe className="h-4 w-4 text-gray-500" />
+                  <span className="capitalize">{job.work_location}</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/50 px-3 py-1.5 rounded-full">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span>{job.location}</span>
+                </div>
+                {job.salary && (
+                  <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full font-medium">
+                    <DollarSign className="h-4 w-4" />
+                    <span>{job.salary}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 text-gray-500 px-2 py-1.5">
+                  <Clock className="h-4 w-4" />
+                  <span>Posted {timeAgo(job.created_at)}</span>
+                </div>
+              </div>
             </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 min-w-[200px]">
+              <Button size="lg" onClick={handleApply} className="w-full sm:w-auto shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all font-semibold text-lg h-12">
+                Apply Now <Zap className="ml-2 h-4 w-4 fill-current" />
+              </Button>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto h-12">
+                <Share2 className="mr-2 h-4 w-4" /> Share
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Sidebar - Related Jobs */}
-        <div className="hidden lg:block lg:col-span-4 space-y-4">
-          <h3 className="font-semibold text-lg px-1">More Jobs</h3>
-          <div className="space-y-3">
-             {relatedJobs.map((relatedJob) => (
-                <Link href={`/jobs/${relatedJob.id}`} key={relatedJob.id} className="block">
-                  <div className={clsx(
-                    "p-4 rounded-xl border bg-card hover:bg-accent transition-colors duration-200 cursor-pointer group",
-                    relatedJob.id === job.id ? "border-primary ring-1 ring-primary" : "border-border"
-                  )}>
-                    <div className="flex justify-between items-start mb-2">
-                       <h4 className="font-semibold text-base group-hover:text-primary transition-colors line-clamp-2">
-                         {relatedJob.title}
-                       </h4>
-                       {/* Placeholder for bookmark/save */}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                        <Building2 className="h-3.5 w-3.5" />
-                        <span className="truncate">{relatedJob.company_name}</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 text-xs">
-                        <Badge variant="secondary" className="font-normal bg-secondary/50">
-                            {relatedJob.job_type.replace("_", " ")}
-                        </Badge>
-                        <span className="text-muted-foreground flex items-center gap-1">
-                             <Clock className="h-3 w-3" />
-                             {timeAgo(relatedJob.created_at)}
-                        </span>
-                    </div>
-                  </div>
-                </Link>
-             ))}
-             {relatedJobs.length === 0 && (
-                 <div className="text-muted-foreground text-sm p-4 text-center">No other jobs found.</div>
-             )}
-          </div>
-        </div>
-
-        {/* Main Content - Job Details */}
-        <div className="col-span-1 lg:col-span-8 space-y-6">
-           {/* Job Header Card */}
-           <Card className="overflow-hidden border-none shadow-lg bg-card text-card-foreground">
-             <div className="p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row justify-between gap-6">
-                   <div className="space-y-4">
-                      <div>
-                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">{job.title}</h1>
-                        <div className="flex items-center gap-2 text-lg text-muted-foreground">
-                           <Building2 className="h-5 w-5" />
-                           <span className="font-medium text-foreground">{job.company_name}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-y-2 gap-x-6 text-sm sm:text-base">
-                         <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="h-4.5 w-4.5" />
-                            <span>{job.location}</span>
-                         </div>
-                         <div className="flex items-center gap-2 text-muted-foreground">
-                            <Briefcase className="h-4.5 w-4.5" />
-                            <span className="capitalize">{job.job_type.replace(/_/g, " ")}</span>
-                         </div>
-                         <div className="flex items-center gap-2 text-muted-foreground">
-                            <Globe className="h-4.5 w-4.5" />
-                            <span className="capitalize">{job.work_location.replace(/_/g, " ")}</span>
-                         </div>
-                         {job.salary && (
-                           <div className="flex items-center gap-2 text-foreground font-medium">
-                              <DollarSign className="h-4.5 w-4.5" />
-                              <span>{job.salary}</span>
-                           </div>
-                         )}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>Posted on {formatDate(job.created_at)}</span>
-                      </div>
-                   </div>
-
-                   <div className="flex-shrink-0">
-                      <Button size="lg" onClick={handleApply} className="w-full sm:w-auto px-8 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
-                        Apply Now
-                      </Button>
-                   </div>
-                </div>
-             </div>
-           </Card>
-
-           {/* Job Description Content */}
-           <Card className="border-none shadow-sm">
-             <CardContent className="p-6 sm:p-8 space-y-8">
+        {/* Main Content */}
+        <div className="col-span-1 lg:col-span-8 space-y-8">
+           {/* Description Card */}
+           <Card className="border-none shadow-sm overflow-hidden">
+             <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+             <CardContent className="p-8 space-y-8">
                <div>
-                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                   <span className="bg-primary/10 p-1.5 rounded-lg text-primary">
-                     <Briefcase className="h-6 w-6" />
-                   </span>
+                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
                    Job Description
                  </h2>
-                 <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary hover:prose-a:underline">
+                 <div className="prose prose-lg prose-gray dark:prose-invert max-w-none 
+                   prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-gray-100
+                   prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+                   prose-li:text-gray-600 dark:prose-li:text-gray-300
+                   prose-strong:text-gray-900 dark:prose-strong:text-gray-100
+                   prose-a:text-blue-600 hover:prose-a:underline">
                    <MarkdownRenderer content={job.description} />
                  </div>
                </div>
 
-               {/* Required Skills */}
+               <Separator className="bg-gray-100 dark:bg-gray-800" />
+
+               {/* Skills Section */}
                {job.required_skills && job.required_skills.length > 0 && (
                  <div>
-                   <h3 className="text-xl font-bold mb-4">Required Skills</h3>
+                   <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                     <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" /> Required Skills
+                   </h3>
                    <div className="flex flex-wrap gap-2">
                      {job.required_skills.map((skill) => (
                        <Badge 
                          key={skill} 
                          variant="secondary" 
-                         className="px-4 py-2 text-sm font-medium bg-secondary/50 hover:bg-secondary transition-colors"
+                         className="px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-100 border border-blue-100 dark:border-blue-800"
                        >
                          {skill}
                        </Badge>
@@ -261,6 +222,56 @@ export default function JobDetailsPage() {
                )}
              </CardContent>
            </Card>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="col-span-1 lg:col-span-4 space-y-6">
+          {/* Company Snapshot (Placeholder for future) */}
+          <Card className="border shadow-none bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">About {job.company_name}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Leading the way in innovation and technology. Join a team that values growth and impact.
+              </p>
+              <Button variant="link" className="px-0 text-blue-600 h-auto font-medium">
+                View Company Page &rarr;
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Similar Jobs */}
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-4 px-1">Similar Jobs</h3>
+            <div className="space-y-3">
+               {relatedJobs.map((relatedJob) => (
+                  <Link href={`/jobs/${relatedJob.id}`} key={relatedJob.id} className="block group">
+                    <div className={clsx(
+                      "p-4 rounded-xl border bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-200 cursor-pointer",
+                      relatedJob.id === job.id ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700"
+                    )}>
+                      <h4 className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors line-clamp-1 mb-1">
+                        {relatedJob.title}
+                      </h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{relatedJob.company_name}</p>
+                      
+                      <div className="flex flex-wrap gap-2 text-xs">
+                          <Badge variant="outline" className="font-normal text-gray-500 border-gray-200 dark:border-gray-700">
+                              {relatedJob.job_type.replace(/-/g, " ")}
+                          </Badge>
+                          {relatedJob.salary && (
+                            <span className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded text-xs font-medium">
+                                {relatedJob.salary}
+                            </span>
+                          )}
+                      </div>
+                    </div>
+                  </Link>
+               ))}
+               {relatedJobs.length === 0 && (
+                   <div className="text-gray-500 text-sm p-4 text-center border border-dashed rounded-xl">No similar jobs found.</div>
+               )}
+            </div>
+          </div>
         </div>
 
       </div>
