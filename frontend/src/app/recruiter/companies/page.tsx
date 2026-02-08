@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { jobApi } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Building2, MapPin, Globe, ExternalLink, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Company {
   id: string;
@@ -27,6 +28,8 @@ interface Company {
   website: string;
   location: string;
   created_at: string;
+  logo_url?: string;
+  industry?: string;
 }
 
 export default function CompaniesPage() {
@@ -41,6 +44,7 @@ export default function CompaniesPage() {
     description: "",
     website: "",
     location: "",
+    industry: "",
   });
 
   useEffect(() => {
@@ -96,6 +100,7 @@ export default function CompaniesPage() {
       description: company.description,
       website: company.website,
       location: company.location,
+      industry: company.industry || "",
     });
     setIsDialogOpen(true);
   };
@@ -113,171 +118,214 @@ export default function CompaniesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", website: "", location: "" });
+    setFormData({ name: "", description: "", website: "", location: "", industry: "" });
     setEditingCompany(null);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">My Companies</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage your company profiles
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Company
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCompany ? "Edit Company" : "Create New Company"}
-                </DialogTitle>
-                <DialogDescription>
-                  Fill in the company details below
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Company Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="City, Country"
-                    required
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button type="submit" className="flex-1">
-                    {editingCompany ? "Update" : "Create"} Company
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      resetForm();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Companies List */}
-        {companies.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <Building2 className="h-16 w-16 text-gray-400 mb-4" />
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                No companies yet
-              </p>
-              <p className="text-gray-500 mb-6">
-                Create a company to start posting jobs
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {companies.map((company) => (
-              <Card key={company.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    {company.name}
-                  </CardTitle>
-                  <CardDescription>{company.location}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-                    {company.description}
-                  </p>
-                  {company.website && (
-                    <a
-                      href={company.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline block mb-4"
-                    >
-                      Visit website
-                    </a>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="default"
-                      onClick={() => router.push(`/companies/${company.id}`)}
-                      className="flex-1"
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(company)}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(company.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Companies</h1>
+              <p className="text-gray-500 dark:text-gray-400 mt-1">Manage and update your company profiles.</p>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="shadow-lg shadow-blue-500/20 gap-2">
+                  <Plus className="h-4 w-4" /> Add Company
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">{editingCompany ? "Edit Company" : "Create New Company"}</DialogTitle>
+                  <DialogDescription>
+                    Fill in the details to {editingCompany ? "update" : "create"} your company profile.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Company Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                      placeholder="e.g. Acme Corp"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="location">Location *</Label>
+                      <Input
+                        id="location"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        required
+                        placeholder="City, Country"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="industry">Industry</Label>
+                      <Input
+                        id="industry"
+                        value={formData.industry}
+                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                        placeholder="e.g. Technology"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      value={formData.website}
+                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">Description *</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={4}
+                      required
+                      placeholder="Tell us about your company..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 mt-6">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit">{editingCompany ? "Update" : "Create"} Company</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {companies.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700"
+          >
+            <div className="h-20 w-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-6">
+              <Building2 className="h-10 w-10 text-gray-400" />
+            </div>
+            <h3 className="font-bold text-xl text-gray-900 dark:text-gray-100">No companies yet</h3>
+            <p className="text-gray-500 mt-2 max-w-sm mx-auto">Create your first company profile to start posting jobs and managing your employer brand.</p>
+            <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="mt-6" variant="outline">
+              Create First Company
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {companies.map((company) => (
+              <motion.div variants={itemVariants} key={company.id}>
+                <Card className="h-full hover:shadow-xl hover:border-blue-500 transition-all group duration-300 flex flex-col">
+                  <CardHeader className="pb-4">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="h-12 w-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                        {company.logo_url ? (
+                          <img src={company.logo_url} alt={company.name} className="h-8 w-8 object-contain" />
+                        ) : (
+                          <Building2 className="h-6 w-6" />
+                        )}
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                          onClick={() => handleEdit(company)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => handleDelete(company.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <CardTitle className="text-xl group-hover:text-blue-600 transition-colors cursor-pointer" onClick={() => router.push(`/companies/${company.id}`)}>
+                      {company.name}
+                    </CardTitle>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {company.location}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="flex-1 pb-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
+                      {company.description}
+                    </p>
+                    {company.industry && (
+                      <span className="inline-flex items-center rounded-md bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 ring-1 ring-inset ring-gray-500/10">
+                        {company.industry}
+                      </span>
+                    )}
+                  </CardContent>
+
+                  <CardFooter className="pt-2 border-t border-gray-100 dark:border-gray-800 mt-auto flex justify-between">
+                    {company.website && (
+                      <a 
+                        href={company.website} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1"
+                      >
+                        <Globe className="h-3.5 w-3.5" /> Website
+                      </a>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => router.push(`/companies/${company.id}`)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-1 ml-auto"
+                    >
+                      View Details <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </div>
     </div>
