@@ -43,17 +43,22 @@ export function CTA() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Link href="/register">
-              <Button size="lg" variant="secondary" className="h-12 px-8 text-base w-full sm:w-auto text-blue-700 hover:text-blue-800 font-semibold shadow-lg">
-                Create Free Account
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base w-full sm:w-auto bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white backdrop-blur-sm">
-                Log In
-              </Button>
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/register">
+                <Button size="lg" variant="secondary" className="h-12 px-8 text-base w-full sm:w-auto text-blue-700 hover:text-blue-800 font-semibold shadow-lg">
+                  Create Free Account
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="h-12 px-8 text-base w-full sm:w-auto bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white backdrop-blur-sm">
+                  Log In
+                </Button>
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
       </div>

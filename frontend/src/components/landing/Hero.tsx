@@ -61,17 +61,22 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Link href="/register">
-              <Button size="lg" className="h-12 px-8 text-base w-full sm:w-auto shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow">
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base w-full sm:w-auto bg-background/50 backdrop-blur-sm">
-                Sign In
-              </Button>
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/register">
+                <Button size="lg" className="h-12 px-8 text-base w-full sm:w-auto shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow">
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="h-12 px-8 text-base w-full sm:w-auto bg-background/50 backdrop-blur-sm hover:bg-background/80">
+                  Sign In
+                </Button>
+              </Link>
+            </motion.div>
           </motion.div>
 
           {/* Stats / Social Proof */}
