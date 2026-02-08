@@ -142,7 +142,9 @@ func GetCompany(c *gin.Context) {
 
 	var company models.Company
 	query := `
-		SELECT id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
+		SELECT id, name, COALESCE(description, ''), COALESCE(website, ''), COALESCE(logo_url, ''), 
+		       recruiter_id, COALESCE(industry, ''), COALESCE(company_size, ''), COALESCE(founded_year, 0), 
+		       COALESCE(headquarters, ''), COALESCE(rating, 0), created_at, updated_at
 		FROM companies WHERE id = $1
 	`
 	err := config.DB.QueryRow(query, companyID).
@@ -176,7 +178,9 @@ func GetCompanies(c *gin.Context) {
 	}
 
 	query := `
-		SELECT id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
+		SELECT id, name, COALESCE(description, ''), COALESCE(website, ''), COALESCE(logo_url, ''), 
+		       recruiter_id, COALESCE(industry, ''), COALESCE(company_size, ''), COALESCE(founded_year, 0), 
+		       COALESCE(headquarters, ''), COALESCE(rating, 0), created_at, updated_at
 		FROM companies
 		WHERE recruiter_id = $1
 		ORDER BY created_at DESC
@@ -209,7 +213,9 @@ func GetCompanies(c *gin.Context) {
 // GetAllCompanies lists all companies (public endpoint for browsing)
 func GetAllCompanies(c *gin.Context) {
 	query := `
-		SELECT id, name, description, website, logo_url, recruiter_id, industry, company_size, founded_year, headquarters, rating, created_at, updated_at
+		SELECT id, name, COALESCE(description, ''), COALESCE(website, ''), COALESCE(logo_url, ''), 
+		       recruiter_id, COALESCE(industry, ''), COALESCE(company_size, ''), COALESCE(founded_year, 0), 
+		       COALESCE(headquarters, ''), COALESCE(rating, 0), created_at, updated_at
 		FROM companies
 		ORDER BY rating DESC NULLS LAST, created_at DESC
 		LIMIT 100

@@ -59,18 +59,19 @@ export function Navbar() {
                     </Link>
                   </>
                 )}
+                {/* Companies link visible to all logged-in users */}
+                <Link
+                  href="/companies"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    pathname.startsWith("/companies")
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  Companies
+                </Link>
                 {userRole === "recruiter" && (
                   <>
-                    <Link
-                      href="/recruiter/companies"
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        pathname.startsWith("/recruiter/companies")
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100"
-                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      Companies
-                    </Link>
                     <Link
                       href="/recruiter/jobs"
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
