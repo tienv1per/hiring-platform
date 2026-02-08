@@ -4,6 +4,7 @@ import { HeroAI } from "@/components/landing/HeroAI";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { ComparisonSlider } from "@/components/landing/ComparisonSlider";
 import { BentoFeatures } from "@/components/landing/BentoFeatures";
+import { ContactSection } from "@/components/landing/ContactSection";
 import { Footer } from "@/components/landing/Footer";
 
 export default function HomePage() {
@@ -14,13 +15,14 @@ export default function HomePage() {
         <SocialProof />
         <ComparisonSlider />
         <BentoFeatures />
+        <ContactSection />
         
         {/* Simple CTA Section */}
-        <section className="py-32 bg-gradient-to-t from-indigo-100 dark:from-indigo-950/20 to-white dark:to-[#030711] relative overflow-hidden">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] dark:bg-[url('/grid.svg')] bg-[size:32px_32px] dark:opacity-10" />
+        <section className="py-32 bg-gradient-to-t from-indigo-100 dark:from-indigo-950/20 to-gray-50 dark:to-gray-900 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(99,102,241,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.05)_1px,transparent_1px)] bg-[size:32px_32px]" />
             <div className="container px-4 text-center relative z-10">
                 <h2 className="text-4xl md:text-6xl font-bold mb-8 text-gray-900 dark:text-white">Ready to hire at the speed of thought?</h2>
-                <button className="bg-indigo-600 dark:bg-white text-white dark:text-black px-8 py-4 rounded-full text-lg font-bold hover:bg-indigo-500 dark:hover:bg-gray-200 transition-colors shadow-2xl shadow-indigo-500/20">
+                <button className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white px-8 py-4 rounded-full text-lg font-bold transition-all shadow-2xl shadow-indigo-500/20">
                     Get Started Free
                 </button>
             </div>
@@ -31,3 +33,4 @@ export default function HomePage() {
     </div>
   );
 }
+

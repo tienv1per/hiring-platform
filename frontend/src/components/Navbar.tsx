@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Logo } from "@/components/ui/Logo";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -29,29 +30,22 @@ export function Navbar() {
   const navLinkClass = (path: string) => `
     relative px-3 py-2 text-sm font-medium transition-colors
     ${pathname === path 
-      ? "text-blue-600 dark:text-blue-400" 
-      : "text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"}
+      ? "text-indigo-600 dark:text-indigo-400" 
+      : "text-gray-600 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-white"}
   `;
 
   return (
     <nav 
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled 
-          ? "bg-white/80 dark:bg-black/50 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 shadow-sm" 
+          ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 shadow-sm" 
           : "bg-transparent border-b border-transparent"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
-                J
-              </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
-                JobPortal
-              </span>
-            </Link>
+            <Logo size="md" />
             
             {isAuthenticated && (
               <div className="hidden md:flex items-center space-x-1">
