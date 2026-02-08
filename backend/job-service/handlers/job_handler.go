@@ -95,27 +95,26 @@ func UpdateJob(c *gin.Context) {
 	}
 
 	// Build dynamic update query
+	// Note: job_type and work_location are ENUM types, so we use CASE WHEN instead of COALESCE
 	query := `
 		UPDATE jobs
 		SET title = COALESCE(NULLIF($1, ''), title),
 		    description = COALESCE(NULLIF($2, ''), description),
 		    salary = COALESCE(NULLIF($3, ''), salary),
 		    location = COALESCE(NULLIF($4, ''), location),
-		    job_type = COALESCE(NULLIF($5, ''), job_type),
-		    work_location = COALESCE(NULLIF($6, ''), work_location),
-		    openings = COALESCE(NULLIF($7, 0), openings),
-		    status = COALESCE(NULLIF($8, ''), status),
-		    required_skills = COALESCE($9, required_skills),
+		    job_type = CASE WHEN $5 = '' THEN job_type ELSE $5::job_type END,
+		    work_location = CASE WHEN $6 = '' THEN work_location ELSE $6::work_location END,
+		    openings = CASE WHEN $7 = 0 THEN openings ELSE $7 END,
+		    status = CASE WHEN $8 = '' THEN status ELSE $8::job_status END,
+		    required_skills = $9,
 		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = $10
 		RETURNING id, title, description, salary, location, job_type, work_location, openings, required_skills, company_id, recruiter_id, status, created_at, updated_at
 	`
 
 	var job models.Job
-	var skills interface{}
-	if len(req.RequiredSkills) > 0 {
-		skills = pq.Array(req.RequiredSkills)
-	}
+	// Always use pq.Array for skills - pass empty array if no skills provided
+	skills := pq.Array(req.RequiredSkills)
 
 	err = config.DB.QueryRow(query, req.Title, req.Description, req.Salary, req.Location, req.JobType,
 		req.WorkLocation, req.Openings, req.Status, skills, jobID).
@@ -124,6 +123,7 @@ func UpdateJob(c *gin.Context) {
 			&job.RecruiterID, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 
 	if err != nil {
+		log.Printf("UpdateJob error for job %s: %v", jobID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update job"})
 		return
 	}
@@ -200,6 +200,7 @@ func GetJobByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
 		return
 	} else if err != nil {
+		log.Printf("GetJobByID error for job %s: %v", jobID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
