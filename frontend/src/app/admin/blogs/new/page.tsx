@@ -15,7 +15,9 @@ import {
   EditorRoot,
   EditorContent,
   type JSONContent,
+  StarterKit,
 } from "novel";
+import Placeholder from "@tiptap/extension-placeholder";
 
 interface Category {
   id: string;
@@ -262,6 +264,12 @@ export default function CreateBlogPage() {
                 <div className="novel-editor-wrapper">
                   <EditorRoot>
                     <EditorContent
+                      extensions={[
+                        StarterKit,
+                        Placeholder.configure({
+                          placeholder: "Start writing your blog post...",
+                        }),
+                      ]}
                       initialContent={{
                         type: "doc",
                         content: [{ type: "paragraph" }],
