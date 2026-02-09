@@ -1,60 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
-  Brain, Search, Github, Linkedin, Globe, Calendar
+  Brain, Search, Github, Linkedin, Globe, Calendar, Clock, Eye, ChevronLeft, ChevronRight, Loader2
 } from "lucide-react";
+import { blogApi } from "@/lib/api";
 
-// Mock blog articles with AI-focused content
-const BLOG_ARTICLES = [
-  {
-    id: "1",
-    slug: "how-ai-revolutionizing-hiring-2026",
-    title: "How AI is Revolutionizing the Hiring Process in 2026",
-    excerpt: "Discover how artificial intelligence is transforming recruitment, from resume screening to candidate matching, and what it means for both employers and job seekers.",
-    tags: ["AI", "Machine Learning", "Hiring"],
-    date: "Feb 5, 2026",
-  },
-  {
-    id: "2",
-    slug: "semantic-job-matching-algorithm",
-    title: "The Science Behind Our Semantic Job Matching Algorithm",
-    excerpt: "A deep dive into how our AI understands the nuances of job requirements and candidate profiles to create perfect matches using natural language processing.",
-    tags: ["NLP", "Algorithms", "Backend"],
-    date: "Feb 3, 2026",
-  },
-  {
-    id: "3",
-    slug: "optimize-resume-ai-screening",
-    title: "5 Ways to Optimize Your Resume for AI Screening",
-    excerpt: "Learn practical tips to ensure your resume stands out when reviewed by AI-powered applicant tracking systems and get more interview callbacks.",
-    tags: ["Career Tips", "Resume", "Job Search"],
-    date: "Jan 28, 2026",
-  },
-  {
-    id: "4",
-    slug: "diverse-teams-ai-recruitment",
-    title: "Building Diverse Teams with AI-Powered Recruitment",
-    excerpt: "How companies are using AI to reduce unconscious bias and build more inclusive workplaces through data-driven, fair hiring decisions.",
-    tags: ["DEI", "AI Ethics", "Hiring"],
-    date: "Jan 22, 2026",
-  },
-  {
-    id: "5",
-    slug: "future-remote-work-ai-talent",
-    title: "The Future of Remote Work: AI-Driven Talent Discovery",
-    excerpt: "Explore how AI is enabling companies to find the best talent globally, regardless of location, and what this means for the future of distributed work.",
-    tags: ["Remote Work", "Trends", "Future of Work"],
-    date: "Jan 15, 2026",
-  }
-];
-
-// Tag colors map (pastel colors like reference)
+// Tag colors map
 const TAG_COLORS: Record<string, string> = {
   "AI": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300",
   "Machine Learning": "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300",
@@ -72,29 +31,91 @@ const TAG_COLORS: Record<string, string> = {
   "Future of Work": "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
 };
 
-// Get all unique tags with counts
-const getAllTags = () => {
-  const tagCounts: Record<string, number> = {};
-  BLOG_ARTICLES.forEach(article => {
-    article.tags.forEach(tag => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-    });
-  });
-  return tagCounts;
-};
+interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  cover_image_url: string;
+  author_name: string;
+  category_name: string;
+  category_slug: string;
+  tags: string[];
+  read_time: number;
+  views_count: number;
+  published_at: string;
+  created_at: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+}
 
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const tagCounts = getAllTags();
+  // Fetch blogs
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      setLoading(true);
+      try {
+        const endpoint = selectedCategory
+          ? `/api/blogs/category/${selectedCategory}?page=${page}&page_size=10`
+          : `/api/blogs?page=${page}&page_size=10`;
+        const res = await blogApi.get(endpoint);
+        setBlogs(res.data.blogs || []);
+        setTotalPages(res.data.total_pages || 1);
+        setTotal(res.data.total || 0);
+      } catch {
+        // Fallback: use empty array if service unavailable
+        setBlogs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, [page, selectedCategory]);
 
-  const filteredArticles = BLOG_ARTICLES.filter((article) => {
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = !selectedTag || article.tags.includes(selectedTag);
-    return matchesSearch && matchesTag;
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await blogApi.get("/api/categories");
+        setCategories(res.data.categories || []);
+      } catch {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Client-side search filter
+  const filteredBlogs = blogs.filter((blog) => {
+    if (!searchQuery) return true;
+    return (
+      blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      blog.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white relative">
@@ -105,7 +126,7 @@ export default function BlogPage() {
         <div className="absolute bottom-0 left-1/2 w-[600px] h-[400px] bg-cyan-300/20 dark:bg-cyan-600/10 rounded-full blur-[120px] -translate-x-1/2 translate-y-1/2" />
       </div>
 
-      {/* Hero Section - Centered */}
+      {/* Hero Section */}
       <section className="relative pt-28 pb-12 z-10">
         <div className="container mx-auto px-4">
           <motion.div
@@ -113,16 +134,13 @@ export default function BlogPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-2xl mx-auto"
           >
-            {/* Title with serif-style */}
             <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
               HireAI <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-600">Blog</span>
             </h1>
             
-            {/* Bio */}
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
               Insights on AI-powered recruitment, career tips, and the future of hiring. 
-              We share research, experiences, and lessons learned from building intelligent matching systems. 
-              Thanks for stopping by!
+              We share research, experiences, and lessons learned from building intelligent matching systems.
             </p>
 
             {/* Social Links */}
@@ -149,9 +167,8 @@ export default function BlogPage() {
               </Link>
             </div>
 
-            {/* Post count */}
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              <span className="font-semibold text-indigo-600 dark:text-indigo-400">{BLOG_ARTICLES.length}</span> posts
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">{total}</span> posts
             </p>
           </motion.div>
         </div>
@@ -163,50 +180,113 @@ export default function BlogPage() {
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
             {/* Left - Articles */}
             <div className="space-y-6">
-              {filteredArticles.map((article, index) => (
-                <motion.div
-                  key={article.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Link href={`/blog/${article.slug}`}>
-                    <Card className="bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/50 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all cursor-pointer group backdrop-blur-sm">
-                      <CardContent className="p-6">
-                        {/* Title */}
-                        <h2 className="text-xl font-bold mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight">
-                          {article.title}
-                        </h2>
-                        
-                        {/* Excerpt */}
-                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed">
-                          {article.excerpt}
-                        </p>
-                        
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {article.tags.map((tag) => (
-                            <Badge 
-                              key={tag} 
-                              className={`text-xs font-medium border-0 ${TAG_COLORS[tag] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"}`}
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        
-                        {/* Date */}
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>{article.date}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </motion.div>
-              ))}
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                  <span className="ml-3 text-gray-500">Loading articles...</span>
+                </div>
+              ) : filteredBlogs.length > 0 ? (
+                <>
+                  {filteredBlogs.map((blog, index) => (
+                    <motion.div
+                      key={blog.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Link href={`/blog/${blog.slug}`}>
+                        <Card className="bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/50 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all cursor-pointer group backdrop-blur-sm">
+                          {blog.cover_image_url && (
+                            <div className="relative w-full h-48 overflow-hidden">
+                              <Image
+                                src={blog.cover_image_url}
+                                alt={blog.title}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          )}
+                          <CardContent className="p-6">
+                            {/* Category badge */}
+                            {blog.category_name && (
+                              <Badge className="mb-3 bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border-0 text-xs">
+                                {blog.category_name}
+                              </Badge>
+                            )}
 
-              {filteredArticles.length === 0 && (
+                            {/* Title */}
+                            <h2 className="text-xl font-bold mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight">
+                              {blog.title}
+                            </h2>
+                            
+                            {/* Excerpt */}
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2">
+                              {blog.excerpt}
+                            </p>
+                            
+                            {/* Tags */}
+                            {blog.tags && blog.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                {blog.tags.map((tag) => (
+                                  <Badge 
+                                    key={tag} 
+                                    className={`text-xs font-medium border-0 ${TAG_COLORS[tag] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"}`}
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Meta info */}
+                            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>{formatDate(blog.published_at || blog.created_at)}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>{blog.read_time} min read</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{blog.views_count} views</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  ))}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-3 pt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(Math.max(1, page - 1))}
+                        disabled={page === 1}
+                        className="rounded-xl"
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                      </Button>
+                      <span className="text-sm text-gray-500">
+                        Page {page} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(Math.min(totalPages, page + 1))}
+                        disabled={page === totalPages}
+                        className="rounded-xl"
+                      >
+                        Next <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
                 <div className="text-center py-16">
                   <Brain className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No articles found</h3>
@@ -232,49 +312,39 @@ export default function BlogPage() {
                 </CardContent>
               </Card>
 
-              {/* Tags Cloud */}
-              <Card className="bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/50 rounded-2xl backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(tagCounts).map(([tag, count]) => (
+              {/* Categories */}
+              {categories.length > 0 && (
+                <Card className="bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/50 rounded-2xl backdrop-blur-sm">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Categories</h3>
+                    <div className="space-y-1.5">
                       <button
-                        key={tag}
-                        onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
-                          selectedTag === tag
-                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                            : TAG_COLORS[tag] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                        } hover:scale-105`}
+                        onClick={() => { setSelectedCategory(null); setPage(1); }}
+                        className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-all ${
+                          !selectedCategory
+                            ? "bg-indigo-600 text-white"
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                        }`}
                       >
-                        {tag} <span className="opacity-60">({count})</span>
+                        All Posts
                       </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Archive */}
-              <Card className="bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/50 rounded-2xl backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Archive</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">2026</h4>
-                      <div className="grid grid-cols-4 gap-2">
-                        {["Jan", "Feb"].map((month) => (
-                          <button
-                            key={month}
-                            className="text-xs font-medium px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                          >
-                            {month}
-                          </button>
-                        ))}
-                      </div>
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => { setSelectedCategory(cat.slug); setPage(1); }}
+                          className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-all ${
+                            selectedCategory === cat.slug
+                              ? "bg-indigo-600 text-white"
+                              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                          }`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* AI Powered Notice */}
               <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 border-0 rounded-2xl overflow-hidden">

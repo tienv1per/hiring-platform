@@ -39,6 +39,7 @@ stop_service "auth-service"
 stop_service "user-service"
 stop_service "job-service"
 stop_service "utility-service"
+stop_service "blog-service"
 
 # Stop monitoring services if running
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "prometheus\|grafana\|loki\|promtail"; then

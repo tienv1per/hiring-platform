@@ -7,6 +7,7 @@ const API_URLS = {
   user: process.env.NEXT_PUBLIC_USER_URL || "http://localhost:8002",
   job: process.env.NEXT_PUBLIC_JOB_URL || "http://localhost:8003",
   utility: process.env.NEXT_PUBLIC_UTILITY_URL || "http://localhost:8004",
+  blog: process.env.NEXT_PUBLIC_BLOG_URL || "http://localhost:8005",
 };
 
 // Create axios instances for each service
@@ -59,3 +60,5 @@ export const authApi = createApiClient(API_URLS.auth);
 export const userApi = createApiClient(API_URLS.user);
 export const jobApi = createApiClient(API_URLS.job);
 export const utilityApi = createApiClient(API_URLS.utility);
+export const blogApi = createApiClient(API_URLS.blog);
+

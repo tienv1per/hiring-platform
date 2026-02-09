@@ -125,6 +125,29 @@ export function Navbar() {
                     </Link>
                   </>
                 )}
+
+                {userRole === "admin" && (
+                  <>
+                    <Link href="/admin/blogs" className={navLinkClass("/admin/blogs")}>
+                      Blog Management
+                      {pathname.startsWith("/admin/blogs") && (
+                        <motion.div
+                          layoutId="navbar-indicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                        />
+                      )}
+                    </Link>
+                    <Link href="/admin/categories" className={navLinkClass("/admin/categories")}>
+                      Categories
+                      {pathname.startsWith("/admin/categories") && (
+                        <motion.div
+                          layoutId="navbar-indicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                        />
+                      )}
+                    </Link>
+                  </>
+                )}
               </div>
             )}
           </div>

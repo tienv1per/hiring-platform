@@ -57,6 +57,7 @@ start_service "auth-service" "backend/auth-service" "${AUTH_SERVICE_PORT:-8001}"
 start_service "user-service" "backend/user-service" "${USER_SERVICE_PORT:-8002}"
 start_service "job-service" "backend/job-service" "${JOB_SERVICE_PORT:-8003}"
 start_service "utility-service" "backend/utility-service" "${UTILITY_SERVICE_PORT:-8004}"
+start_service "blog-service" "backend/blog-service" "${BLOG_SERVICE_PORT:-8005}"
 
 echo ""
 echo -e "${GREEN}✅ All backend services started successfully!${NC}"

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 
 interface AuthContextType {
   userId: string | null;
-  userRole: "jobseeker" | "recruiter" | null;
+  userRole: "jobseeker" | "recruiter" | "admin" | null;
   user: {
     name?: string | null;
     email?: string | null;

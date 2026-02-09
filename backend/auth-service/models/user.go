@@ -22,7 +22,7 @@ type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
 	Phone    string `json:"phone"`
-	Role     string `json:"role" binding:"required,oneof=jobseeker recruiter"`
+	Role     string `json:"role" binding:"required,oneof=jobseeker recruiter admin"`
 }
 
 type LoginRequest struct {
