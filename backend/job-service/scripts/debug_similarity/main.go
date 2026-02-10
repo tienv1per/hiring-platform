@@ -21,7 +21,7 @@ func getEmbedding(text string) ([]float64, error) {
 	payload := map[string]string{"text": text}
 	body, _ := json.Marshal(payload)
 
-	resp, err := http.Post("http://localhost:8005/embed", "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post("http://localhost:8006/embed", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}

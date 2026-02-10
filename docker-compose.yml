@@ -1,0 +1,284 @@
+services:
+  # ============================================
+  # Infrastructure
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: jp-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: jp-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: jp-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ============================================
+  # Backend Services
+  # ============================================
+  auth-service:
+    build:
+      context: ./backend/auth-service
+    container_name: jp-auth
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - AUTH_SERVICE_PORT=8001
+      - GIN_MODE=release
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./backend/user-service
+    container_name: jp-user
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - USER_SERVICE_PORT=8002
+      - GIN_MODE=release
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  job-service:
+    build:
+      context: ./backend/job-service
+    container_name: jp-job
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMBEDDING_SERVICE_URL=http://embedding-service:8006
+      - JOB_SERVICE_PORT=8003
+      - GIN_MODE=release
+    depends_on:
+      embedding-service:
+        condition: service_healthy
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  utility-service:
+    build:
+      context: ./backend/utility-service
+    container_name: jp-utility
+    ports:
+      - "8004:8004"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - KAFKA_BROKER=kafka:29092
+      - KAFKA_EMAIL_TOPIC=${KAFKA_EMAIL_TOPIC:-email-notifications}
+      - KAFKA_GROUP_ID=${KAFKA_GROUP_ID:-email-consumer-group}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - UTILITY_SERVICE_PORT=8004
+      - GIN_MODE=release
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  blog-service:
+    build:
+      context: ./backend/blog-service
+    container_name: jp-blog
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - BLOG_SERVICE_PORT=8005
+      - GIN_MODE=release
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  embedding-service:
+    build:
+      context: ./backend/embedding-service
+    container_name: jp-embedding
+    ports:
+      - "8006:8006"
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # ============================================
+  # Frontend
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL:-http://localhost:8001}
+        - NEXT_PUBLIC_USER_URL=${NEXT_PUBLIC_USER_URL:-http://localhost:8002}
+        - NEXT_PUBLIC_JOB_URL=${NEXT_PUBLIC_JOB_URL:-http://localhost:8003}
+        - NEXT_PUBLIC_UTILITY_URL=${NEXT_PUBLIC_UTILITY_URL:-http://localhost:8004}
+        - NEXT_PUBLIC_BLOG_URL=${NEXT_PUBLIC_BLOG_URL:-http://localhost:8005}
+    container_name: jp-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - BACKEND_AUTH_URL=http://auth-service:8001
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      - auth-service
+      - user-service
+      - job-service
+      - utility-service
+      - blog-service
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+
+  # ============================================
+  # Monitoring (optional — comment out to save RAM)
+  # ============================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: jp-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: jp-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - job-portal-network
+    depends_on:
+      - prometheus
+      - loki
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: jp-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - job-portal-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: jp-promtail
+    volumes:
+      - ./docker/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - ./logs:/var/log/app:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - job-portal-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+networks:
+  job-portal-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:

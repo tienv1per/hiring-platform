@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,11 @@ var embeddingService *embedding.EmbeddingService
 
 // InitEmbeddingService initializes the embedding service
 func InitEmbeddingService() {
-	embeddingService = embedding.NewEmbeddingService("http://localhost:8005")
+	embeddingURL := os.Getenv("EMBEDDING_SERVICE_URL")
+	if embeddingURL == "" {
+		embeddingURL = "http://localhost:8006"
+	}
+	embeddingService = embedding.NewEmbeddingService(embeddingURL)
 
 	// Health check
 	if err := embeddingService.HealthCheck(); err != nil {

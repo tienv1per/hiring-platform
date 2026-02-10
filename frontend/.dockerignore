@@ -1,0 +1,13 @@
+# Frontend .dockerignore
+.next
+node_modules
+.git
+.gitignore
+*.md
+.env*
+.vscode
+.idea
+npm-debug.log*
+.DS_Store
+out/
+coverage/

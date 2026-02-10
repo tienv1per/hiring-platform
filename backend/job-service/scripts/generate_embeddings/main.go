@@ -21,7 +21,7 @@ func main() {
 	defer config.CloseDB()
 
 	// Initialize embedding service
-	embeddingService := embedding.NewEmbeddingService("http://localhost:8005")
+	embeddingService := embedding.NewEmbeddingService("http://localhost:8006")
 	if err := embeddingService.HealthCheck(); err != nil {
 		log.Fatalf("❌ Embedding server not available: %v", err)
 	}

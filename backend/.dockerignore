@@ -1,0 +1,14 @@
+# Go backend .dockerignore
+*.md
+*.log
+*.test
+.git
+.gitignore
+.vscode
+.idea
+__pycache__
+*.pyc
+logs/
+tmp/
+coverage.*
+docker-compose*.yml

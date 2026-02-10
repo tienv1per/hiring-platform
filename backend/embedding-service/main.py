@@ -165,8 +165,8 @@ def embed_batch():
 
 
 if __name__ == '__main__':
-    print("\n🚀 Starting embedding server on http://localhost:8005")
+    print("\n🚀 Starting embedding server on http://localhost:8006")
     print("   Model: sentence-transformers/all-MiniLM-L6-v2")
     print("   Dimensions: 384")
     print("\n")
-    app.run(host='0.0.0.0', port=8005, debug=False)
+    app.run(host='0.0.0.0', port=8006, debug=False)

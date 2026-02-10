@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    build-essential wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -19,8 +19,8 @@ COPY . .
 ENV FLASK_APP=main.py
 ENV FLASK_ENV=production
 
-# Expose port
-EXPOSE 8005
+EXPOSE 8006
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:8006/health || exit 1
 
-# Run the application
 CMD ["python", "main.py"]
