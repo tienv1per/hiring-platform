@@ -96,8 +96,17 @@ export function Navbar() {
 
                 {userRole === "recruiter" && (
                   <>
+                    <Link href="/jobs" className={navLinkClass("/jobs")}>
+                      Find Jobs
+                      {pathname === "/jobs" && (
+                        <motion.div
+                          layoutId="navbar-indicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                        />
+                      )}
+                    </Link>
                     <Link href="/recruiter/jobs" className={navLinkClass("/recruiter/jobs")}>
-                      Jobs
+                      My Postings
                       {pathname.startsWith("/recruiter/jobs") && (
                         <motion.div
                           layoutId="navbar-indicator"
