@@ -99,8 +99,36 @@ export default function CompanyDetailsPage() {
         const companyRes = await jobApi.get(`/api/companies/${params.id}`);
         setCompany(companyRes.data);
 
-        const jobsRes = await jobApi.get(`/api/jobs/company/${params.id}`);
-        setJobs(jobsRes.data || []);
+        // Try the dedicated company jobs endpoint first
+        try {
+          const jobsRes = await jobApi.get(`/api/jobs/company/${params.id}`);
+          const jobsData = jobsRes.data;
+          // Handle both array response and object with "jobs" key
+          if (Array.isArray(jobsData)) {
+            setJobs(jobsData);
+          } else if (jobsData?.jobs) {
+            setJobs(jobsData.jobs);
+          } else {
+            setJobs([]);
+          }
+        } catch {
+          // Fallback: use the general jobs listing filtered by company
+          try {
+            const fallbackRes = await jobApi.get(`/api/jobs`, {
+              params: { company_id: params.id, limit: 100 },
+            });
+            const fallbackData = fallbackRes.data;
+            if (Array.isArray(fallbackData)) {
+              setJobs(fallbackData);
+            } else if (fallbackData?.jobs) {
+              setJobs(fallbackData.jobs);
+            } else {
+              setJobs([]);
+            }
+          } catch {
+            setJobs([]);
+          }
+        }
       } catch (error) {
         console.error("Failed to load company data:", error);
         toast.error("Failed to load company information");

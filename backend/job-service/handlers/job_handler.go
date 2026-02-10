@@ -259,6 +259,18 @@ func SearchJobs(c *gin.Context) {
 		args = append(args, workLocation)
 		argIndex++
 	}
+	companyID := c.Query("company_id")
+	if companyID != "" {
+		query += ` AND j.company_id = $` + strconv.Itoa(argIndex)
+		args = append(args, companyID)
+		argIndex++
+	}
+	recruiterID := c.Query("recruiter_id")
+	if recruiterID != "" {
+		query += ` AND j.recruiter_id = $` + strconv.Itoa(argIndex)
+		args = append(args, recruiterID)
+		argIndex++
+	}
 
 	query += ` ORDER BY j.created_at DESC LIMIT $` + strconv.Itoa(argIndex) + ` OFFSET $` + strconv.Itoa(argIndex+1)
 	args = append(args, limit, offset)
