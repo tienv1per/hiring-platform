@@ -105,11 +105,11 @@ func GetAdminCompanies(c *gin.Context) {
 	query := `
 		SELECT c.id, c.name, COALESCE(c.description, ''), COALESCE(c.website, ''), COALESCE(c.logo_url, ''),
 		       COALESCE(c.industry, ''), COALESCE(c.company_size, ''), COALESCE(c.headquarters, ''),
-		       COALESCE(c.rating, 0), COALESCE(c.recruiter_id, ''),
+		       COALESCE(c.rating, 0), COALESCE(c.recruiter_id::text, ''),
 		       COALESCE(u.name, 'Unassigned'), COALESCE(u.email, ''),
 		       COALESCE(jc.cnt, 0), c.created_at
 		FROM companies c
-		LEFT JOIN users u ON c.recruiter_id = u.id
+		LEFT JOIN users u ON c.recruiter_id IS NOT NULL AND c.recruiter_id = u.id
 		LEFT JOIN (
 			SELECT company_id, COUNT(*) as cnt
 			FROM jobs

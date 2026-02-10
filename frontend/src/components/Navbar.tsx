@@ -138,7 +138,7 @@ export function Navbar() {
                 {userRole === "admin" && (
                   <>
                     <Link href="/admin/companies" className={navLinkClass("/admin/companies")}>
-                      Companies
+                      Assignments
                       {pathname.startsWith("/admin/companies") && (
                         <motion.div
                           layoutId="navbar-indicator"

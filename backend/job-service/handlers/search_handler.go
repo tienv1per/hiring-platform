@@ -129,12 +129,9 @@ func generateJobEmbedding(jobID, title string) error {
 	// Format embedding as string "[v1,v2,...]" for pgvector
 	vectorStr := "[" + strings.Trim(strings.Join(strings.Fields(fmt.Sprint(embedding)), ","), "[]") + "]"
 
-	// Update job with embedding
-	_, err = config.DB.Exec(
-		"UPDATE jobs SET title_embedding = $1::vector WHERE id = $2",
-		vectorStr,
-		jobID,
-	)
+	// Update job with embedding using explicit cast
+	query := fmt.Sprintf("UPDATE jobs SET title_embedding = '%s'::vector WHERE id = $1", vectorStr)
+	_, err = config.DB.Exec(query, jobID)
 	if err != nil {
 		return fmt.Errorf("failed to save embedding: %w", err)
 	}
