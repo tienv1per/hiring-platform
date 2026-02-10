@@ -73,3 +73,16 @@ func RecruiterOnly() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// AdminOnly middleware ensures only admins can access the endpoint
+func AdminOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role := c.GetString("user_role")
+		if role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Only admins can perform this action"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}

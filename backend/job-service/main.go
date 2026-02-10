@@ -87,6 +87,16 @@ func main() {
 			applications.GET("/my", handlers.GetMyApplications) // Get user's applications
 			applications.PUT("/:id/status", middleware.RecruiterOnly(), handlers.UpdateApplicationStatus)
 		}
+
+		// Admin routes (admin only)
+		admin := auth.Group("/admin")
+		admin.Use(middleware.AdminOnly())
+		{
+			admin.GET("/stats", handlers.GetAdminStats)
+			admin.GET("/recruiters", handlers.GetAdminRecruiters)
+			admin.GET("/companies", handlers.GetAdminCompanies)
+			admin.PUT("/companies/:id/assign", handlers.AssignCompanyToRecruiter)
+		}
 	}
 
 	// Start server
